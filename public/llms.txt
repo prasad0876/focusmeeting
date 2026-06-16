@@ -1,0 +1,6 @@
+# Sentinel.meet
+
+> AI-powered secure video conferencing. Direct app-to-app invitations, verified User IDs, real-time AI abuse detection, and privacy-first focus monitoring.
+
+## Pages
+- [Home](/): Product overview and core features
