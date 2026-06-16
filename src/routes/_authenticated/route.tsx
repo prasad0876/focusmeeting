@@ -39,16 +39,16 @@ function AuthedLayout() {
     <div className="min-h-screen bg-background flex flex-col">
       <header className="border-b border-border/60 bg-surface/80 backdrop-blur sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link to="/_authenticated/dashboard" className="flex items-center gap-2 group">
+          <Link to="/dashboard" className="flex items-center gap-2 group">
             <div className="size-8 rounded-md bg-primary/15 grid place-items-center glow-ring">
               <ShieldCheck className="size-4 text-primary" />
             </div>
             <span className="font-semibold tracking-tight">Sentinel<span className="text-primary">.</span>meet</span>
           </Link>
           <nav className="hidden md:flex items-center gap-1">
-            <NavLink to="/_authenticated/dashboard" icon={<LayoutDashboard className="size-4" />} label="Dashboard" />
-            <NavLink to="/_authenticated/invitations" icon={<Inbox className="size-4" />} label="Invitations" />
-            <NavLink to="/_authenticated/new-meeting" icon={<Plus className="size-4" />} label="New meeting" />
+            <NavLink to="/dashboard" icon={<LayoutDashboard className="size-4" />} label="Dashboard" />
+            <NavLink to="/invitations" icon={<Inbox className="size-4" />} label="Invitations" />
+            <NavLink to="/new-meeting" icon={<Plus className="size-4" />} label="New meeting" />
           </nav>
           <div className="flex items-center gap-3">
             {handle && (

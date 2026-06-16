@@ -61,7 +61,7 @@ function Invitations() {
       return;
     }
     if (status === "accepted") {
-      router.navigate({ to: "/_authenticated/meeting/$id", params: { id: row.meeting.id } });
+      router.navigate({ to: "/meeting/$id", params: { id: row.meeting.id } });
     } else {
       toast.success("Declined");
       load();
@@ -115,7 +115,7 @@ function Invitations() {
                   </>
                 ) : r.status === "accepted" && r.meeting ? (
                   <Button asChild size="sm" variant="secondary">
-                    <Link to="/_authenticated/meeting/$id" params={{ id: r.meeting.id }}>
+                    <Link to="/meeting/$id" params={{ id: r.meeting.id }}>
                       Enter room
                     </Link>
                   </Button>

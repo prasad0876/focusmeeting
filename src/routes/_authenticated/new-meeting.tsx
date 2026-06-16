@@ -80,7 +80,7 @@ function NewMeeting() {
         if (invErr) throw invErr;
       }
       toast.success("Meeting created. Invitations sent.");
-      router.navigate({ to: "/_authenticated/meeting/$id", params: { id: meeting.id } });
+      router.navigate({ to: "/meeting/$id", params: { id: meeting.id } });
     } catch (err: any) {
       toast.error(err?.message ?? "Could not create meeting");
     } finally {

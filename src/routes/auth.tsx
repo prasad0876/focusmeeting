@@ -12,7 +12,7 @@ export const Route = createFileRoute("/auth")({
   ssr: false,
   beforeLoad: async () => {
     const { data } = await supabase.auth.getUser();
-    if (data.user) throw redirect({ to: "/_authenticated/dashboard" });
+    if (data.user) throw redirect({ to: "/dashboard" });
   },
   head: () => ({ meta: [{ title: "Sign in · Sentinel.meet" }] }),
   component: AuthPage,
@@ -45,7 +45,7 @@ function AuthPage() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       }
-      router.navigate({ to: "/_authenticated/dashboard", replace: true });
+      router.navigate({ to: "/dashboard", replace: true });
     } catch (err: any) {
       toast.error(err?.message ?? "Authentication failed");
     } finally {
@@ -64,7 +64,7 @@ function AuthPage() {
       return;
     }
     if (result.redirected) return;
-    router.navigate({ to: "/_authenticated/dashboard", replace: true });
+    router.navigate({ to: "/dashboard", replace: true });
   };
 
   return (

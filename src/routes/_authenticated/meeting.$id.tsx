@@ -81,7 +81,7 @@ function MeetingRoom() {
         .maybeSingle();
       if (error || !m) {
         toast.error("You don't have access to this meeting");
-        router.navigate({ to: "/_authenticated/dashboard" });
+        router.navigate({ to: "/dashboard" });
         return;
       }
       if (unmounted) return;
@@ -249,7 +249,7 @@ function MeetingRoom() {
       .update({ left_at: new Date().toISOString() })
       .eq("meeting_id", meetingId)
       .eq("user_id", user.id);
-    router.navigate({ to: "/_authenticated/dashboard" });
+    router.navigate({ to: "/dashboard" });
   };
 
   const endMeeting = async () => {

@@ -88,10 +88,10 @@ function Dashboard() {
             </p>
             <div className="flex gap-2 pt-2">
               <Button asChild>
-                <Link to="/_authenticated/new-meeting"><Plus className="size-4" /> New meeting</Link>
+                <Link to="/new-meeting"><Plus className="size-4" /> New meeting</Link>
               </Button>
               <Button asChild variant="secondary">
-                <Link to="/_authenticated/invitations">
+                <Link to="/invitations">
                   <Inbox className="size-4" /> Invitations
                   {invitationCount > 0 && (
                     <span className="ml-1 px-1.5 py-0.5 rounded text-[10px] font-mono bg-primary text-primary-foreground">
@@ -137,7 +137,7 @@ function Dashboard() {
             {meetings.map((m) => (
               <Link
                 key={m.id}
-                to="/_authenticated/meeting/$id"
+                to="/meeting/$id"
                 params={{ id: m.id }}
                 className="group"
               >
