@@ -26,6 +26,7 @@ type Participant = {
   is_removed: boolean;
   focus_score: number;
   joined_at: string;
+  left_at?: string | null;
   profile?: { handle: string; display_name: string };
 };
 
