@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /auth
+Disallow: /dashboard
+Disallow: /invitations
+Disallow: /new-meeting
+Disallow: /meeting/
