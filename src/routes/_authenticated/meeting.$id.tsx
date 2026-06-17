@@ -208,6 +208,53 @@ function MeetingRoom() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meetingId, user.id, camOn]);
 
+  // Privacy-protected local camera moderation.
+  // Periodically capture a small downscaled frame in-browser, send it to the
+  // AI gateway via a server function for visual-abuse classification, and
+  // discard immediately. The frame is NEVER stored — only a text reasoning
+  // excerpt is persisted on flagged incidents.
+  useEffect(() => {
+    if (!camOn) return;
+    let cancelled = false;
+
+    const captureAndModerate = async () => {
+      const video = videoRef.current;
+      const stream = streamRef.current;
+      if (!video || !stream || video.readyState < 2 || video.videoWidth === 0) return;
+      const myParticipant = participants.find((p) => p.user_id === user.id);
+      if (myParticipant?.is_removed) return;
+
+      try {
+        const targetW = 320;
+        const scale = targetW / video.videoWidth;
+        const w = targetW;
+        const h = Math.round(video.videoHeight * scale);
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        ctx.drawImage(video, 0, 0, w, h);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.55);
+        if (cancelled) return;
+        await moderateFrameFn({ data: { meetingId, imageDataUrl: dataUrl } });
+      } catch (err) {
+        // Silent — visual moderation must never break the call.
+        console.warn("[visual-moderation]", err);
+      }
+    };
+
+    // Stagger first run a bit so the stream is ready.
+    const initial = setTimeout(captureAndModerate, 4000);
+    const interval = setInterval(captureAndModerate, 20_000);
+    return () => {
+      cancelled = true;
+      clearTimeout(initial);
+      clearInterval(interval);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [camOn, meetingId, user.id]);
+
   // Host aggregate alert
   useEffect(() => {
     if (!isHost) return;
