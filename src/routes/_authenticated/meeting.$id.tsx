@@ -55,6 +55,7 @@ function MeetingRoom() {
   const { id: meetingId } = Route.useParams();
   const router = useRouter();
   const moderateFn = useServerFn(moderateAndSendMessage);
+  const moderateFrameFn = useServerFn(moderateVideoFrame);
 
   const [meeting, setMeeting] = useState<{ id: string; title: string; host_id: string; status: string } | null>(null);
   const [participants, setParticipants] = useState<Participant[]>([]);
