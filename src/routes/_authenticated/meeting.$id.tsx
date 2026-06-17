@@ -10,7 +10,7 @@ import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Video, VideoOff, Mic, MicOff, PhoneOff, Send, ShieldAlert,
-  Eye, EyeOff, Users, AlertTriangle, Sparkles,
+  Eye, EyeOff, Users, AlertTriangle, Sparkles, MonitorUp, MonitorOff,
 } from "lucide-react";
 import { toast } from "sonner";
 
