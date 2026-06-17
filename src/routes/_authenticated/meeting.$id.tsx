@@ -166,7 +166,7 @@ function MeetingRoom() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: micOn });
         streamRef.current = stream;
-        if (videoRef.current) videoRef.current.srcObject = stream;
+        if (videoRef.current && !sharingScreen) videoRef.current.srcObject = stream;
       } catch {
         toast.error("Camera/mic access denied");
         setCamOn(false);
@@ -175,6 +175,7 @@ function MeetingRoom() {
     return () => stopCamera();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [camOn]);
+
 
   useEffect(() => {
     streamRef.current?.getAudioTracks().forEach((t) => (t.enabled = micOn));
