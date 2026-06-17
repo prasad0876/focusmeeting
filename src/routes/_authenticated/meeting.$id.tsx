@@ -397,14 +397,21 @@ function MeetingRoom() {
         </div>
 
         {/* Controls */}
-        <div className="border-t border-border/60 px-6 py-4 flex items-center justify-center gap-2">
+        <div className="border-t border-border/60 px-6 py-4 flex items-center justify-center gap-2 flex-wrap">
           <ControlBtn active={micOn} onClick={() => setMicOn((v) => !v)} on={<Mic className="size-4" />} off={<MicOff className="size-4" />} />
           <ControlBtn active={camOn} onClick={() => setCamOn((v) => !v)} on={<Video className="size-4" />} off={<VideoOff className="size-4" />} />
+          <ControlBtn
+            active={sharingScreen}
+            onClick={sharingScreen ? stopScreenShare : startScreenShare}
+            on={<MonitorUp className="size-4" />}
+            off={<MonitorOff className="size-4" />}
+          />
           <Button variant="destructive" onClick={isHost ? endMeeting : leaveAndExit}>
             <PhoneOff className="size-4" /> {isHost ? "End meeting" : "Leave"}
           </Button>
         </div>
       </div>
+
 
       {/* Side panel */}
       <aside className="flex flex-col bg-surface min-h-0">
