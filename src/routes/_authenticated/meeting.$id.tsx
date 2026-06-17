@@ -127,6 +127,7 @@ function MeetingRoom() {
       unmounted = true;
       supabase.removeChannel(channel);
       stopCamera();
+      screenStreamRef.current?.getTracks().forEach((t) => t.stop());
       // leave silently
       supabase
         .from("meeting_participants")
