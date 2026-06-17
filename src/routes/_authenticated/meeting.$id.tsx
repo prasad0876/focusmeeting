@@ -10,7 +10,7 @@ import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Video, VideoOff, Mic, MicOff, PhoneOff, Send, ShieldAlert,
-  Eye, EyeOff, Users, AlertTriangle, Sparkles,
+  Eye, EyeOff, Users, AlertTriangle, Sparkles, MonitorUp, MonitorOff,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -67,8 +67,10 @@ function MeetingRoom() {
   const [micOn, setMicOn] = useState(true);
   const [focusScore, setFocusScore] = useState(95);
   const [hostAlert, setHostAlert] = useState<string | null>(null);
+  const [sharingScreen, setSharingScreen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const screenStreamRef = useRef<MediaStream | null>(null);
 
   const isHost = meeting?.host_id === user.id;
 
@@ -125,6 +127,7 @@ function MeetingRoom() {
       unmounted = true;
       supabase.removeChannel(channel);
       stopCamera();
+      screenStreamRef.current?.getTracks().forEach((t) => t.stop());
       // leave silently
       supabase
         .from("meeting_participants")
@@ -164,7 +167,7 @@ function MeetingRoom() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: micOn });
         streamRef.current = stream;
-        if (videoRef.current) videoRef.current.srcObject = stream;
+        if (videoRef.current && !sharingScreen) videoRef.current.srcObject = stream;
       } catch {
         toast.error("Camera/mic access denied");
         setCamOn(false);
@@ -174,6 +177,7 @@ function MeetingRoom() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [camOn]);
 
+
   useEffect(() => {
     streamRef.current?.getAudioTracks().forEach((t) => (t.enabled = micOn));
   }, [micOn]);
@@ -181,8 +185,38 @@ function MeetingRoom() {
   const stopCamera = () => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
-    if (videoRef.current) videoRef.current.srcObject = null;
+    if (videoRef.current && !sharingScreen) videoRef.current.srcObject = null;
   };
+
+  const stopScreenShare = () => {
+    screenStreamRef.current?.getTracks().forEach((t) => t.stop());
+    screenStreamRef.current = null;
+    setSharingScreen(false);
+    // Restore camera preview if camera is on
+    if (videoRef.current) {
+      videoRef.current.srcObject = camOn ? streamRef.current : null;
+    }
+  };
+
+  const startScreenShare = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: { frameRate: 15 },
+        audio: false,
+      });
+      screenStreamRef.current = stream;
+      setSharingScreen(true);
+      if (videoRef.current) videoRef.current.srcObject = stream;
+      // Listen for browser-native "Stop sharing" button
+      stream.getVideoTracks()[0].addEventListener("ended", stopScreenShare);
+      toast.success("Screen sharing started");
+    } catch (err: any) {
+      if (err?.name !== "NotAllowedError") {
+        toast.error("Could not start screen share");
+      }
+    }
+  };
+
 
   // Focus detection (privacy-first: local heuristic based on tab visibility + small drift)
   useEffect(() => {
@@ -364,14 +398,21 @@ function MeetingRoom() {
         </div>
 
         {/* Controls */}
-        <div className="border-t border-border/60 px-6 py-4 flex items-center justify-center gap-2">
+        <div className="border-t border-border/60 px-6 py-4 flex items-center justify-center gap-2 flex-wrap">
           <ControlBtn active={micOn} onClick={() => setMicOn((v) => !v)} on={<Mic className="size-4" />} off={<MicOff className="size-4" />} />
           <ControlBtn active={camOn} onClick={() => setCamOn((v) => !v)} on={<Video className="size-4" />} off={<VideoOff className="size-4" />} />
+          <ControlBtn
+            active={sharingScreen}
+            onClick={sharingScreen ? stopScreenShare : startScreenShare}
+            on={<MonitorUp className="size-4" />}
+            off={<MonitorOff className="size-4" />}
+          />
           <Button variant="destructive" onClick={isHost ? endMeeting : leaveAndExit}>
             <PhoneOff className="size-4" /> {isHost ? "End meeting" : "Leave"}
           </Button>
         </div>
       </div>
+
 
       {/* Side panel */}
       <aside className="flex flex-col bg-surface min-h-0">
