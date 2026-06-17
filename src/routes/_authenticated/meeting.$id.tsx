@@ -183,8 +183,38 @@ function MeetingRoom() {
   const stopCamera = () => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
-    if (videoRef.current) videoRef.current.srcObject = null;
+    if (videoRef.current && !sharingScreen) videoRef.current.srcObject = null;
   };
+
+  const stopScreenShare = () => {
+    screenStreamRef.current?.getTracks().forEach((t) => t.stop());
+    screenStreamRef.current = null;
+    setSharingScreen(false);
+    // Restore camera preview if camera is on
+    if (videoRef.current) {
+      videoRef.current.srcObject = camOn ? streamRef.current : null;
+    }
+  };
+
+  const startScreenShare = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: { frameRate: 15 },
+        audio: false,
+      });
+      screenStreamRef.current = stream;
+      setSharingScreen(true);
+      if (videoRef.current) videoRef.current.srcObject = stream;
+      // Listen for browser-native "Stop sharing" button
+      stream.getVideoTracks()[0].addEventListener("ended", stopScreenShare);
+      toast.success("Screen sharing started");
+    } catch (err: any) {
+      if (err?.name !== "NotAllowedError") {
+        toast.error("Could not start screen share");
+      }
+    }
+  };
+
 
   // Focus detection (privacy-first: local heuristic based on tab visibility + small drift)
   useEffect(() => {
