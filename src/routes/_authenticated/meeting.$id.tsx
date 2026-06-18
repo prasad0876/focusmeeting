@@ -293,6 +293,112 @@ function MeetingRoom() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [camOn, meetingId, user.id]);
 
+  // ===== AI Meeting Memory: continuous audio transcription =====
+  const transcribeFn = useServerFn(transcribeMeetingChunk);
+  useEffect(() => {
+    if (!micOn) return;
+    let cancelled = false;
+    let recorder: MediaRecorder | null = null;
+    let audioStream: MediaStream | null = null;
+    let chunkStartMs = 0;
+
+    const mime =
+      typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        ? "audio/webm;codecs=opus"
+        : typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported("audio/mp4")
+        ? "audio/mp4"
+        : "audio/webm";
+
+    const cycle = async () => {
+      try {
+        audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        if (cancelled) {
+          audioStream.getTracks().forEach((t) => t.stop());
+          return;
+        }
+        const startLoop = () => {
+          if (cancelled || !audioStream) return;
+          const chunks: Blob[] = [];
+          chunkStartMs = Date.now() - meetingStartRef.current;
+          recorder = new MediaRecorder(audioStream, { mimeType: mime });
+          recorder.ondataavailable = (e) => {
+            if (e.data && e.data.size > 0) chunks.push(e.data);
+          };
+          recorder.onstop = async () => {
+            const blob = new Blob(chunks, { type: mime });
+            const endMs = Date.now() - meetingStartRef.current;
+            if (blob.size > 2000 && !cancelled) {
+              try {
+                const buf = await blob.arrayBuffer();
+                let bin = "";
+                const u8 = new Uint8Array(buf);
+                const step = 0x8000;
+                for (let i = 0; i < u8.length; i += step) {
+                  bin += String.fromCharCode.apply(null, Array.from(u8.subarray(i, i + step)) as number[]);
+                }
+                const b64 = btoa(bin);
+                const res = await transcribeFn({
+                  data: {
+                    meetingId,
+                    audioBase64: b64,
+                    mimeType: mime,
+                    startedAtMs: Math.max(0, chunkStartMs),
+                    endedAtMs: Math.max(0, endMs),
+                  },
+                });
+                if (res?.text && captionsOn) {
+                  const cap = { speaker: "You", text: res.text };
+                  setLiveCaption(cap);
+                  setTimeout(() => setLiveCaption((c) => (c?.text === cap.text ? null : c)), 6000);
+                }
+              } catch (err) {
+                console.warn("[stt] chunk", err);
+              }
+            }
+            if (!cancelled) startLoop();
+          };
+          recorder.start();
+          setTimeout(() => {
+            try { if (recorder?.state === "recording") recorder.stop(); } catch {}
+          }, 12_000);
+        };
+        startLoop();
+      } catch (err) {
+        console.warn("[stt] mic", err);
+      }
+    };
+    cycle();
+
+    return () => {
+      cancelled = true;
+      try { if (recorder?.state === "recording") recorder.stop(); } catch {}
+      audioStream?.getTracks().forEach((t) => t.stop());
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [micOn, meetingId]);
+
+  // Live captions from other participants
+  useEffect(() => {
+    const ch = supabase
+      .channel(`captions:${meetingId}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "meeting_transcripts", filter: `meeting_id=eq.${meetingId}` },
+        (payload) => {
+          const row = payload.new as { user_id: string; speaker_name: string; content: string };
+          if (row.user_id === user.id) return;
+          if (!captionsOn) return;
+          const cap = { speaker: row.speaker_name ?? "Speaker", text: row.content };
+          setLiveCaption(cap);
+          setTimeout(() => setLiveCaption((c) => (c?.text === cap.text ? null : c)), 6000);
+        },
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [meetingId, user.id, captionsOn]);
+
+
+
   // Host aggregate alert
   useEffect(() => {
     if (!isHost) return;
