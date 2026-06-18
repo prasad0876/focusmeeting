@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedNewMeetingRouteImport } from './routes/_authenticated/new-meeting'
 import { Route as AuthenticatedInvitationsRouteImport } from './routes/_authenticated/invitations'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedMemoryIdRouteImport } from './routes/_authenticated/memory.$id'
 import { Route as AuthenticatedMeetingIdRouteImport } from './routes/_authenticated/meeting.$id'
 
 const AuthRoute = AuthRouteImport.update({
@@ -47,6 +48,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedMemoryIdRoute = AuthenticatedMemoryIdRouteImport.update({
+  id: '/memory/$id',
+  path: '/memory/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedMeetingIdRoute = AuthenticatedMeetingIdRouteImport.update({
   id: '/meeting/$id',
   path: '/meeting/$id',
@@ -60,6 +66,7 @@ export interface FileRoutesByFullPath {
   '/invitations': typeof AuthenticatedInvitationsRoute
   '/new-meeting': typeof AuthenticatedNewMeetingRoute
   '/meeting/$id': typeof AuthenticatedMeetingIdRoute
+  '/memory/$id': typeof AuthenticatedMemoryIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -68,6 +75,7 @@ export interface FileRoutesByTo {
   '/invitations': typeof AuthenticatedInvitationsRoute
   '/new-meeting': typeof AuthenticatedNewMeetingRoute
   '/meeting/$id': typeof AuthenticatedMeetingIdRoute
+  '/memory/$id': typeof AuthenticatedMemoryIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -78,6 +86,7 @@ export interface FileRoutesById {
   '/_authenticated/invitations': typeof AuthenticatedInvitationsRoute
   '/_authenticated/new-meeting': typeof AuthenticatedNewMeetingRoute
   '/_authenticated/meeting/$id': typeof AuthenticatedMeetingIdRoute
+  '/_authenticated/memory/$id': typeof AuthenticatedMemoryIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -88,6 +97,7 @@ export interface FileRouteTypes {
     | '/invitations'
     | '/new-meeting'
     | '/meeting/$id'
+    | '/memory/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -96,6 +106,7 @@ export interface FileRouteTypes {
     | '/invitations'
     | '/new-meeting'
     | '/meeting/$id'
+    | '/memory/$id'
   id:
     | '__root__'
     | '/'
@@ -105,6 +116,7 @@ export interface FileRouteTypes {
     | '/_authenticated/invitations'
     | '/_authenticated/new-meeting'
     | '/_authenticated/meeting/$id'
+    | '/_authenticated/memory/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -157,6 +169,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/memory/$id': {
+      id: '/_authenticated/memory/$id'
+      path: '/memory/$id'
+      fullPath: '/memory/$id'
+      preLoaderRoute: typeof AuthenticatedMemoryIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/meeting/$id': {
       id: '/_authenticated/meeting/$id'
       path: '/meeting/$id'
@@ -172,6 +191,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedInvitationsRoute: typeof AuthenticatedInvitationsRoute
   AuthenticatedNewMeetingRoute: typeof AuthenticatedNewMeetingRoute
   AuthenticatedMeetingIdRoute: typeof AuthenticatedMeetingIdRoute
+  AuthenticatedMemoryIdRoute: typeof AuthenticatedMemoryIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -179,6 +199,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedInvitationsRoute: AuthenticatedInvitationsRoute,
   AuthenticatedNewMeetingRoute: AuthenticatedNewMeetingRoute,
   AuthenticatedMeetingIdRoute: AuthenticatedMeetingIdRoute,
+  AuthenticatedMemoryIdRoute: AuthenticatedMemoryIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -192,13 +213,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

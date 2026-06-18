@@ -1,16 +1,17 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { moderateAndSendMessage } from "@/lib/moderation.functions";
 import { moderateVideoFrame } from "@/lib/video-moderation.functions";
+import { transcribeMeetingChunk } from "@/lib/meeting-memory.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Video, VideoOff, Mic, MicOff, PhoneOff, Send, ShieldAlert,
   Eye, EyeOff, Users, AlertTriangle, Sparkles, MonitorUp, MonitorOff,
+  BookOpenText, Captions,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -68,9 +69,12 @@ function MeetingRoom() {
   const [focusScore, setFocusScore] = useState(95);
   const [hostAlert, setHostAlert] = useState<string | null>(null);
   const [sharingScreen, setSharingScreen] = useState(false);
+  const [liveCaption, setLiveCaption] = useState<{ speaker: string; text: string } | null>(null);
+  const [captionsOn, setCaptionsOn] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const screenStreamRef = useRef<MediaStream | null>(null);
+  const meetingStartRef = useRef<number>(Date.now());
 
   const isHost = meeting?.host_id === user.id;
 
@@ -289,6 +293,112 @@ function MeetingRoom() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [camOn, meetingId, user.id]);
 
+  // ===== AI Meeting Memory: continuous audio transcription =====
+  const transcribeFn = useServerFn(transcribeMeetingChunk);
+  useEffect(() => {
+    if (!micOn) return;
+    let cancelled = false;
+    let recorder: MediaRecorder | null = null;
+    let audioStream: MediaStream | null = null;
+    let chunkStartMs = 0;
+
+    const mime =
+      typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        ? "audio/webm;codecs=opus"
+        : typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported("audio/mp4")
+        ? "audio/mp4"
+        : "audio/webm";
+
+    const cycle = async () => {
+      try {
+        audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        if (cancelled) {
+          audioStream.getTracks().forEach((t) => t.stop());
+          return;
+        }
+        const startLoop = () => {
+          if (cancelled || !audioStream) return;
+          const chunks: Blob[] = [];
+          chunkStartMs = Date.now() - meetingStartRef.current;
+          recorder = new MediaRecorder(audioStream, { mimeType: mime });
+          recorder.ondataavailable = (e) => {
+            if (e.data && e.data.size > 0) chunks.push(e.data);
+          };
+          recorder.onstop = async () => {
+            const blob = new Blob(chunks, { type: mime });
+            const endMs = Date.now() - meetingStartRef.current;
+            if (blob.size > 2000 && !cancelled) {
+              try {
+                const buf = await blob.arrayBuffer();
+                let bin = "";
+                const u8 = new Uint8Array(buf);
+                const step = 0x8000;
+                for (let i = 0; i < u8.length; i += step) {
+                  bin += String.fromCharCode.apply(null, Array.from(u8.subarray(i, i + step)) as number[]);
+                }
+                const b64 = btoa(bin);
+                const res = await transcribeFn({
+                  data: {
+                    meetingId,
+                    audioBase64: b64,
+                    mimeType: mime,
+                    startedAtMs: Math.max(0, chunkStartMs),
+                    endedAtMs: Math.max(0, endMs),
+                  },
+                });
+                if (res?.text && captionsOn) {
+                  const cap = { speaker: "You", text: res.text };
+                  setLiveCaption(cap);
+                  setTimeout(() => setLiveCaption((c) => (c?.text === cap.text ? null : c)), 6000);
+                }
+              } catch (err) {
+                console.warn("[stt] chunk", err);
+              }
+            }
+            if (!cancelled) startLoop();
+          };
+          recorder.start();
+          setTimeout(() => {
+            try { if (recorder?.state === "recording") recorder.stop(); } catch {}
+          }, 12_000);
+        };
+        startLoop();
+      } catch (err) {
+        console.warn("[stt] mic", err);
+      }
+    };
+    cycle();
+
+    return () => {
+      cancelled = true;
+      try { if (recorder?.state === "recording") recorder.stop(); } catch {}
+      audioStream?.getTracks().forEach((t) => t.stop());
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [micOn, meetingId]);
+
+  // Live captions from other participants
+  useEffect(() => {
+    const ch = supabase
+      .channel(`captions:${meetingId}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "meeting_transcripts", filter: `meeting_id=eq.${meetingId}` },
+        (payload) => {
+          const row = payload.new as { user_id: string; speaker_name: string; content: string };
+          if (row.user_id === user.id) return;
+          if (!captionsOn) return;
+          const cap = { speaker: row.speaker_name ?? "Speaker", text: row.content };
+          setLiveCaption(cap);
+          setTimeout(() => setLiveCaption((c) => (c?.text === cap.text ? null : c)), 6000);
+        },
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [meetingId, user.id, captionsOn]);
+
+
+
   // Host aggregate alert
   useEffect(() => {
     if (!isHost) return;
@@ -360,6 +470,11 @@ function MeetingRoom() {
           <div className="flex items-center gap-4">
             <FocusGauge label="You" value={focusScore} />
             <FocusGauge label="Room" value={avgFocus} />
+            <Button asChild size="sm" variant="secondary">
+              <Link to="/memory/$id" params={{ id: meetingId }}>
+                <BookOpenText className="size-4" /> Memory
+              </Link>
+            </Button>
           </div>
         </div>
 
@@ -373,7 +488,7 @@ function MeetingRoom() {
           </div>
         )}
 
-        <div className="flex-1 p-6 grid grid-cols-2 md:grid-cols-3 auto-rows-fr gap-3 overflow-auto">
+        <div className="flex-1 p-6 grid grid-cols-2 md:grid-cols-3 auto-rows-fr gap-3 overflow-auto relative">
           {/* Self tile */}
           <ParticipantTile
             self
@@ -395,12 +510,28 @@ function MeetingRoom() {
                 muted={p.is_muted}
               />
             ))}
+
+          {/* Live caption overlay */}
+          {captionsOn && liveCaption && (
+            <div className="pointer-events-none sticky bottom-2 left-0 right-0 col-span-full flex justify-center">
+              <div className="max-w-2xl mx-auto px-4 py-2 rounded-lg bg-background/85 backdrop-blur border border-border/60 text-sm shadow-lg">
+                <span className="text-[10px] font-mono uppercase text-primary mr-2">{liveCaption.speaker}</span>
+                {liveCaption.text}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Controls */}
         <div className="border-t border-border/60 px-6 py-4 flex items-center justify-center gap-2 flex-wrap">
           <ControlBtn active={micOn} onClick={() => setMicOn((v) => !v)} on={<Mic className="size-4" />} off={<MicOff className="size-4" />} />
           <ControlBtn active={camOn} onClick={() => setCamOn((v) => !v)} on={<Video className="size-4" />} off={<VideoOff className="size-4" />} />
+          <ControlBtn
+            active={captionsOn}
+            onClick={() => setCaptionsOn((v) => !v)}
+            on={<Captions className="size-4" />}
+            off={<Captions className="size-4 opacity-50" />}
+          />
           <ControlBtn
             active={sharingScreen}
             onClick={sharingScreen ? stopScreenShare : startScreenShare}
