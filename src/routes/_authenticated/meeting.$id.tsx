@@ -470,6 +470,11 @@ function MeetingRoom() {
           <div className="flex items-center gap-4">
             <FocusGauge label="You" value={focusScore} />
             <FocusGauge label="Room" value={avgFocus} />
+            <Button asChild size="sm" variant="secondary">
+              <Link to="/memory/$id" params={{ id: meetingId }}>
+                <BookOpenText className="size-4" /> Memory
+              </Link>
+            </Button>
           </div>
         </div>
 
