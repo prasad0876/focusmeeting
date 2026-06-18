@@ -135,25 +135,23 @@ function Dashboard() {
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {meetings.map((m) => (
-              <Link
-                key={m.id}
-                to="/meeting/$id"
-                params={{ id: m.id }}
-                className="group"
-              >
-                <Card className="p-5 bg-surface border-border/60 hover:border-primary/50 hover:bg-surface-elevated transition cursor-pointer h-full">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-medium leading-tight">{m.title}</h3>
-                    <StatusPill status={m.status} />
-                  </div>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {m.host_id === user.id ? "You hosted" : "Invited"} · {new Date(m.created_at).toLocaleDateString()}
-                  </p>
-                  <div className="mt-4 flex items-center gap-1.5 text-xs text-primary opacity-0 group-hover:opacity-100 transition">
-                    <Video className="size-3.5" /> Enter room →
-                  </div>
-                </Card>
-              </Link>
+              <Card key={m.id} className="p-5 bg-surface border-border/60 hover:border-primary/50 transition h-full flex flex-col">
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="font-medium leading-tight">{m.title}</h3>
+                  <StatusPill status={m.status} />
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {m.host_id === user.id ? "You hosted" : "Invited"} · {new Date(m.created_at).toLocaleDateString()}
+                </p>
+                <div className="mt-auto pt-4 flex items-center gap-3 text-xs">
+                  <Link to="/meeting/$id" params={{ id: m.id }} className="text-primary flex items-center gap-1 hover:underline">
+                    <Video className="size-3.5" /> Enter room
+                  </Link>
+                  <Link to="/memory/$id" params={{ id: m.id }} className="text-muted-foreground hover:text-foreground flex items-center gap-1 ml-auto">
+                    AI memory →
+                  </Link>
+                </div>
+              </Card>
             ))}
           </div>
         )}
