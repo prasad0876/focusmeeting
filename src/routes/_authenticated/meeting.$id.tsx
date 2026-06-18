@@ -488,7 +488,7 @@ function MeetingRoom() {
           </div>
         )}
 
-        <div className="flex-1 p-6 grid grid-cols-2 md:grid-cols-3 auto-rows-fr gap-3 overflow-auto">
+        <div className="flex-1 p-6 grid grid-cols-2 md:grid-cols-3 auto-rows-fr gap-3 overflow-auto relative">
           {/* Self tile */}
           <ParticipantTile
             self
@@ -510,12 +510,28 @@ function MeetingRoom() {
                 muted={p.is_muted}
               />
             ))}
+
+          {/* Live caption overlay */}
+          {captionsOn && liveCaption && (
+            <div className="pointer-events-none sticky bottom-2 left-0 right-0 col-span-full flex justify-center">
+              <div className="max-w-2xl mx-auto px-4 py-2 rounded-lg bg-background/85 backdrop-blur border border-border/60 text-sm shadow-lg">
+                <span className="text-[10px] font-mono uppercase text-primary mr-2">{liveCaption.speaker}</span>
+                {liveCaption.text}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Controls */}
         <div className="border-t border-border/60 px-6 py-4 flex items-center justify-center gap-2 flex-wrap">
           <ControlBtn active={micOn} onClick={() => setMicOn((v) => !v)} on={<Mic className="size-4" />} off={<MicOff className="size-4" />} />
           <ControlBtn active={camOn} onClick={() => setCamOn((v) => !v)} on={<Video className="size-4" />} off={<VideoOff className="size-4" />} />
+          <ControlBtn
+            active={captionsOn}
+            onClick={() => setCaptionsOn((v) => !v)}
+            on={<Captions className="size-4" />}
+            off={<Captions className="size-4 opacity-50" />}
+          />
           <ControlBtn
             active={sharingScreen}
             onClick={sharingScreen ? stopScreenShare : startScreenShare}
