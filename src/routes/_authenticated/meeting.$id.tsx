@@ -69,9 +69,12 @@ function MeetingRoom() {
   const [focusScore, setFocusScore] = useState(95);
   const [hostAlert, setHostAlert] = useState<string | null>(null);
   const [sharingScreen, setSharingScreen] = useState(false);
+  const [liveCaption, setLiveCaption] = useState<{ speaker: string; text: string } | null>(null);
+  const [captionsOn, setCaptionsOn] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const screenStreamRef = useRef<MediaStream | null>(null);
+  const meetingStartRef = useRef<number>(Date.now());
 
   const isHost = meeting?.host_id === user.id;
 
