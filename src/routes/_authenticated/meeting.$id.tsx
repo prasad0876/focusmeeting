@@ -1,16 +1,17 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { moderateAndSendMessage } from "@/lib/moderation.functions";
 import { moderateVideoFrame } from "@/lib/video-moderation.functions";
+import { transcribeMeetingChunk } from "@/lib/meeting-memory.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Video, VideoOff, Mic, MicOff, PhoneOff, Send, ShieldAlert,
   Eye, EyeOff, Users, AlertTriangle, Sparkles, MonitorUp, MonitorOff,
+  BookOpenText, Captions,
 } from "lucide-react";
 import { toast } from "sonner";
 
