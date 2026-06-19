@@ -48,25 +48,33 @@ Rules:
 - Keep "text" inside nodes short (under 6 words).
 - Output ONLY valid JSON, nothing else.`;
 
-    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: prompt },
-        ],
-        response_format: { type: "json_object" },
-      }),
-    });
+    const callGateway = () =>
+      fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: "google/gemini-3-flash-preview",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: prompt },
+          ],
+          response_format: { type: "json_object" },
+        }),
+      });
 
-    if (resp.status === 429) throw new Error("AI rate limit reached. Try again in a moment.");
+    let resp = await callGateway();
+    for (let attempt = 0; attempt < 3 && resp.status === 429; attempt++) {
+      await new Promise((r) => setTimeout(r, 800 * Math.pow(2, attempt)));
+      resp = await callGateway();
+    }
+
+    if (resp.status === 429) throw new Error("AI is busy right now. Please try again in a few seconds.");
     if (resp.status === 402) throw new Error("AI credits exhausted. Please add credits in workspace settings.");
     if (!resp.ok) throw new Error(`AI gateway error: ${resp.status}`);
+
 
     const json = await resp.json();
     let parsed: { title?: string; elements: DiagramElement[] };
