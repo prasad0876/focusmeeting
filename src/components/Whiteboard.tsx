@@ -119,7 +119,7 @@ export function Whiteboard({
     if (tool === "pen") {
       const tempId = `tmp-${Date.now()}`;
       setDrawing({ id: tempId, points: [p] });
-      (e.target as Element & { setPointerCapture?: any }).setPointerCapture?.(e.pointerId);
+      (e.target as unknown as { setPointerCapture?: (id: number) => void }).setPointerCapture?.(e.pointerId);
     } else if (tool === "note") {
       await persistInsert("note", { x: p.x - 90, y: p.y - 50, w: 180, h: 120, text: "Note" });
     } else if (tool === "rect") {
@@ -313,10 +313,10 @@ export function Whiteboard({
               const shapeProps = el.kind === "rect"
                 ? { x: el.data.x, y: el.data.y, width: el.data.w, height: el.data.h, rx: 8 }
                 : { cx: el.data.x + el.data.w / 2, cy: el.data.y + el.data.h / 2, rx: el.data.w / 2, ry: el.data.h / 2 };
+              const ShapeEl = Shape as unknown as React.ComponentType<Record<string, unknown>>;
               return (
                 <g key={el.id} onPointerDown={onDrag} onClick={onErase}>
-                  {/* @ts-expect-error dynamic SVG element */}
-                  <Shape {...shapeProps} fill={el.color + "22"} stroke={el.color} strokeWidth={2} />
+                  <ShapeEl {...shapeProps} fill={el.color + "22"} stroke={el.color} strokeWidth={2} />
                   <foreignObject x={el.data.x} y={el.data.y} width={el.data.w} height={el.data.h} pointerEvents="none">
                     <div className="w-full h-full grid place-items-center text-xs font-medium text-foreground text-center px-2">
                       {el.data.text}
