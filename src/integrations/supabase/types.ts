@@ -448,6 +448,50 @@ export type Database = {
         }
         Relationships: []
       }
+      whiteboard_elements: {
+        Row: {
+          color: string
+          created_at: string
+          data: Json
+          id: string
+          kind: string
+          meeting_id: string
+          updated_at: string
+          user_id: string
+          z_index: number
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          data?: Json
+          id?: string
+          kind: string
+          meeting_id: string
+          updated_at?: string
+          user_id: string
+          z_index?: number
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          data?: Json
+          id?: string
+          kind?: string
+          meeting_id?: string
+          updated_at?: string
+          user_id?: string
+          z_index?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whiteboard_elements_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "meetings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

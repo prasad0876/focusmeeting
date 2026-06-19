@@ -11,9 +11,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Video, VideoOff, Mic, MicOff, PhoneOff, Send, ShieldAlert,
   Eye, EyeOff, Users, AlertTriangle, Sparkles, MonitorUp, MonitorOff,
-  BookOpenText, Captions,
+  BookOpenText, Captions, Presentation,
 } from "lucide-react";
 import { toast } from "sonner";
+import { Whiteboard } from "@/components/Whiteboard";
 
 export const Route = createFileRoute("/_authenticated/meeting/$id")({
   head: ({ params }) => ({ meta: [{ title: `Meeting · Sentinel.meet` }] }),
@@ -71,6 +72,7 @@ function MeetingRoom() {
   const [sharingScreen, setSharingScreen] = useState(false);
   const [liveCaption, setLiveCaption] = useState<{ speaker: string; text: string } | null>(null);
   const [captionsOn, setCaptionsOn] = useState(true);
+  const [whiteboardOpen, setWhiteboardOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const screenStreamRef = useRef<MediaStream | null>(null);
@@ -538,6 +540,12 @@ function MeetingRoom() {
             on={<MonitorUp className="size-4" />}
             off={<MonitorOff className="size-4" />}
           />
+          <ControlBtn
+            active={whiteboardOpen}
+            onClick={() => setWhiteboardOpen((v) => !v)}
+            on={<Presentation className="size-4" />}
+            off={<Presentation className="size-4 opacity-50" />}
+          />
           <Button variant="destructive" onClick={isHost ? endMeeting : leaveAndExit}>
             <PhoneOff className="size-4" /> {isHost ? "End meeting" : "Leave"}
           </Button>
@@ -630,6 +638,10 @@ function MeetingRoom() {
           </div>
         )}
       </aside>
+
+      {whiteboardOpen && (
+        <Whiteboard meetingId={meetingId} userId={user.id} onClose={() => setWhiteboardOpen(false)} />
+      )}
     </div>
   );
 }
