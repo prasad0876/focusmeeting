@@ -15,8 +15,9 @@ type Row = {
   id: string;
   status: string;
   created_at: string;
-  meeting: { id: string; title: string; description: string | null; status: string; host_id: string };
-  inviter: { handle: string; display_name: string };
+  inviter_id: string;
+  meeting: { id: string; title: string; description: string | null; status: string; host_id: string } | null;
+  inviter: { handle: string; display_name: string } | null;
 };
 
 function Invitations() {
@@ -26,16 +27,42 @@ function Invitations() {
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
-    const { data } = await supabase
+    const { data: invites, error } = await supabase
       .from("meeting_invitations")
       .select(`
-        id, status, created_at,
-        meeting:meetings(id, title, description, status, host_id),
-        inviter:profiles!meeting_invitations_inviter_id_fkey(handle, display_name)
+        id, status, created_at, inviter_id,
+        meeting:meetings(id, title, description, status, host_id)
       `)
       .eq("invitee_id", user.id)
       .order("created_at", { ascending: false });
-    setRows((data as any) ?? []);
+
+    if (error) {
+      toast.error(error.message);
+      setLoading(false);
+      return;
+    }
+
+    const inviterIds = Array.from(new Set((invites ?? []).map((r: any) => r.inviter_id).filter(Boolean)));
+    const profilesById: Record<string, { handle: string; display_name: string }> = {};
+    if (inviterIds.length) {
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id, handle, display_name")
+        .in("id", inviterIds);
+      (profs ?? []).forEach((p: any) => {
+        profilesById[p.id] = { handle: p.handle, display_name: p.display_name };
+      });
+    }
+
+    const enriched: Row[] = (invites ?? []).map((r: any) => ({
+      id: r.id,
+      status: r.status,
+      created_at: r.created_at,
+      inviter_id: r.inviter_id,
+      meeting: r.meeting ?? null,
+      inviter: profilesById[r.inviter_id] ?? null,
+    }));
+    setRows(enriched);
     setLoading(false);
   };
 
@@ -44,6 +71,7 @@ function Invitations() {
     const channel = supabase
       .channel("invites:" + user.id)
       .on("postgres_changes", { event: "*", schema: "public", table: "meeting_invitations", filter: `invitee_id=eq.${user.id}` }, () => load())
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "meetings" }, () => load())
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
@@ -60,10 +88,10 @@ function Invitations() {
       toast.error(error.message);
       return;
     }
-    if (status === "accepted") {
+    if (status === "accepted" && row.meeting) {
       router.navigate({ to: "/meeting/$id", params: { id: row.meeting.id } });
     } else {
-      toast.success("Declined");
+      toast.success(status === "accepted" ? "Accepted" : "Declined");
       load();
     }
   };
