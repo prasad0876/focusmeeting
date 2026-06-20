@@ -544,6 +544,7 @@ function MeetingRoom() {
                 displayName={p.profile?.display_name ?? "User"}
                 focus={p.focus_score}
                 muted={p.is_muted}
+                remoteStream={remotePeers[p.user_id]}
               />
             ))}
 
