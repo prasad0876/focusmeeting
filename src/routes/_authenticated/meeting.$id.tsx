@@ -178,11 +178,26 @@ function MeetingRoom() {
       stopCamera();
       return;
     }
+  // Camera + mic capture. We always try to get both so toggles flip track.enabled
+  // without losing the peer connection.
+  useEffect(() => {
+    if (!camOn && !micOn) {
+      stopCamera();
+      return;
+    }
     (async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: micOn });
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: camOn,
+          audio: micOn,
+        });
+        cameraStreamRef.current = stream;
         streamRef.current = stream;
-        if (videoRef.current && !sharingScreen) videoRef.current.srcObject = stream;
+        if (!sharingScreen) {
+          setLocalStream(stream);
+          await replaceLocalStream(stream);
+          if (videoRef.current) videoRef.current.srcObject = stream;
+        }
       } catch {
         toast.error("Camera/mic access denied");
         setCamOn(false);
@@ -198,33 +213,49 @@ function MeetingRoom() {
   }, [micOn]);
 
   const stopCamera = () => {
-    streamRef.current?.getTracks().forEach((t) => t.stop());
+    cameraStreamRef.current?.getTracks().forEach((t) => t.stop());
+    cameraStreamRef.current = null;
     streamRef.current = null;
     if (videoRef.current && !sharingScreen) videoRef.current.srcObject = null;
   };
 
-  const stopScreenShare = () => {
+  const stopScreenShare = async () => {
     screenStreamRef.current?.getTracks().forEach((t) => t.stop());
     screenStreamRef.current = null;
     setSharingScreen(false);
-    // Restore camera preview if camera is on
+    // Restore camera+mic outbound stream
+    const cam = cameraStreamRef.current;
+    setLocalStream(cam);
+    await replaceLocalStream(cam);
     if (videoRef.current) {
-      videoRef.current.srcObject = camOn ? streamRef.current : null;
+      videoRef.current.srcObject = camOn && cam ? cam : null;
     }
   };
 
   const startScreenShare = async () => {
     try {
       const stream = await navigator.mediaDevices.getDisplayMedia({
-        video: { frameRate: 15 },
-        audio: false,
+        video: { frameRate: 30 },
+        audio: true, // Capture tab/system audio when the browser allows it
       });
       screenStreamRef.current = stream;
       setSharingScreen(true);
+
+      // Combine screen video + (screen audio OR mic audio) into one outbound stream
+      const out = new MediaStream();
+      stream.getVideoTracks().forEach((t) => out.addTrack(t));
+      const screenAudio = stream.getAudioTracks();
+      if (screenAudio.length > 0) {
+        screenAudio.forEach((t) => out.addTrack(t));
+      } else if (cameraStreamRef.current && micOn) {
+        cameraStreamRef.current.getAudioTracks().forEach((t) => out.addTrack(t));
+      }
+      setLocalStream(out);
+      await replaceLocalStream(out);
+
       if (videoRef.current) videoRef.current.srcObject = stream;
-      // Listen for browser-native "Stop sharing" button
       stream.getVideoTracks()[0].addEventListener("ended", stopScreenShare);
-      toast.success("Screen sharing started");
+      toast.success(screenAudio.length > 0 ? "Screen + audio sharing started" : "Screen sharing started (no audio shared)");
     } catch (err: any) {
       if (err?.name !== "NotAllowedError") {
         toast.error("Could not start screen share");
