@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Whiteboard } from "@/components/Whiteboard";
+import { useWebRTC } from "@/hooks/use-webrtc";
 
 export const Route = createFileRoute("/_authenticated/meeting/$id")({
   head: ({ params }) => ({ meta: [{ title: `Meeting · Sentinel.meet` }] }),
@@ -76,7 +77,15 @@ function MeetingRoom() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const screenStreamRef = useRef<MediaStream | null>(null);
+  const cameraStreamRef = useRef<MediaStream | null>(null);
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const meetingStartRef = useRef<number>(Date.now());
+
+  const { remotePeers, replaceLocalStream } = useWebRTC({
+    meetingId,
+    userId: user.id,
+    localStream,
+  });
 
   const isHost = meeting?.host_id === user.id;
 
@@ -163,17 +172,26 @@ function MeetingRoom() {
     setIncidents((incs as Incident[]) ?? []);
   };
 
-  // Camera
+  // Camera + mic capture. We always try to get both so toggles flip track.enabled
+  // without losing the peer connection.
   useEffect(() => {
-    if (!camOn) {
+    if (!camOn && !micOn) {
       stopCamera();
       return;
     }
     (async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: micOn });
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: camOn,
+          audio: micOn,
+        });
+        cameraStreamRef.current = stream;
         streamRef.current = stream;
-        if (videoRef.current && !sharingScreen) videoRef.current.srcObject = stream;
+        if (!sharingScreen) {
+          setLocalStream(stream);
+          await replaceLocalStream(stream);
+          if (videoRef.current) videoRef.current.srcObject = stream;
+        }
       } catch {
         toast.error("Camera/mic access denied");
         setCamOn(false);
@@ -189,33 +207,49 @@ function MeetingRoom() {
   }, [micOn]);
 
   const stopCamera = () => {
-    streamRef.current?.getTracks().forEach((t) => t.stop());
+    cameraStreamRef.current?.getTracks().forEach((t) => t.stop());
+    cameraStreamRef.current = null;
     streamRef.current = null;
     if (videoRef.current && !sharingScreen) videoRef.current.srcObject = null;
   };
 
-  const stopScreenShare = () => {
+  const stopScreenShare = async () => {
     screenStreamRef.current?.getTracks().forEach((t) => t.stop());
     screenStreamRef.current = null;
     setSharingScreen(false);
-    // Restore camera preview if camera is on
+    // Restore camera+mic outbound stream
+    const cam = cameraStreamRef.current;
+    setLocalStream(cam);
+    await replaceLocalStream(cam);
     if (videoRef.current) {
-      videoRef.current.srcObject = camOn ? streamRef.current : null;
+      videoRef.current.srcObject = camOn && cam ? cam : null;
     }
   };
 
   const startScreenShare = async () => {
     try {
       const stream = await navigator.mediaDevices.getDisplayMedia({
-        video: { frameRate: 15 },
-        audio: false,
+        video: { frameRate: 30 },
+        audio: true, // Capture tab/system audio when the browser allows it
       });
       screenStreamRef.current = stream;
       setSharingScreen(true);
+
+      // Combine screen video + (screen audio OR mic audio) into one outbound stream
+      const out = new MediaStream();
+      stream.getVideoTracks().forEach((t) => out.addTrack(t));
+      const screenAudio = stream.getAudioTracks();
+      if (screenAudio.length > 0) {
+        screenAudio.forEach((t) => out.addTrack(t));
+      } else if (cameraStreamRef.current && micOn) {
+        cameraStreamRef.current.getAudioTracks().forEach((t) => out.addTrack(t));
+      }
+      setLocalStream(out);
+      await replaceLocalStream(out);
+
       if (videoRef.current) videoRef.current.srcObject = stream;
-      // Listen for browser-native "Stop sharing" button
       stream.getVideoTracks()[0].addEventListener("ended", stopScreenShare);
-      toast.success("Screen sharing started");
+      toast.success(screenAudio.length > 0 ? "Screen + audio sharing started" : "Screen sharing started (no audio shared)");
     } catch (err: any) {
       if (err?.name !== "NotAllowedError") {
         toast.error("Could not start screen share");
@@ -510,6 +544,7 @@ function MeetingRoom() {
                 displayName={p.profile?.display_name ?? "User"}
                 focus={p.focus_score}
                 muted={p.is_muted}
+                remoteStream={remotePeers[p.user_id]}
               />
             ))}
 
@@ -677,6 +712,7 @@ function ParticipantTile({
   self,
   isLocalCamera,
   videoRef,
+  remoteStream,
 }: {
   handle: string;
   displayName: string;
@@ -685,12 +721,38 @@ function ParticipantTile({
   self?: boolean;
   isLocalCamera?: boolean;
   videoRef?: React.RefObject<HTMLVideoElement | null>;
+  remoteStream?: MediaStream;
 }) {
   const focused = focus >= 50;
+  const remoteVideoRef = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    if (remoteVideoRef.current && remoteStream) {
+      remoteVideoRef.current.srcObject = remoteStream;
+    }
+  }, [remoteStream]);
+
+  const hasRemoteVideo = !!remoteStream && remoteStream.getVideoTracks().some((t) => t.readyState === "live");
+
   return (
     <div className="relative rounded-xl bg-secondary/40 border border-border/60 overflow-hidden aspect-video group">
       {self && isLocalCamera ? (
         <video ref={videoRef} autoPlay muted playsInline className="absolute inset-0 w-full h-full object-cover" />
+      ) : remoteStream ? (
+        <>
+          <video
+            ref={remoteVideoRef}
+            autoPlay
+            playsInline
+            className={`absolute inset-0 w-full h-full object-cover ${hasRemoteVideo ? "" : "opacity-0"}`}
+          />
+          {!hasRemoteVideo && (
+            <div className="absolute inset-0 grid place-items-center">
+              <div className="size-16 rounded-full bg-primary/15 grid place-items-center border border-primary/30">
+                <span className="text-xl font-semibold text-primary">{displayName.slice(0, 1).toUpperCase()}</span>
+              </div>
+            </div>
+          )}
+        </>
       ) : (
         <div className="absolute inset-0 grid place-items-center">
           <div className="size-16 rounded-full bg-primary/15 grid place-items-center border border-primary/30">
