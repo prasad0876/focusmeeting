@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Whiteboard } from "@/components/Whiteboard";
+import { useWebRTC } from "@/hooks/use-webrtc";
 
 export const Route = createFileRoute("/_authenticated/meeting/$id")({
   head: ({ params }) => ({ meta: [{ title: `Meeting · Sentinel.meet` }] }),
