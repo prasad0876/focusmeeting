@@ -172,12 +172,6 @@ function MeetingRoom() {
     setIncidents((incs as Incident[]) ?? []);
   };
 
-  // Camera
-  useEffect(() => {
-    if (!camOn) {
-      stopCamera();
-      return;
-    }
   // Camera + mic capture. We always try to get both so toggles flip track.enabled
   // without losing the peer connection.
   useEffect(() => {
