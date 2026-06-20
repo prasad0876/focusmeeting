@@ -712,6 +712,7 @@ function ParticipantTile({
   self,
   isLocalCamera,
   videoRef,
+  remoteStream,
 }: {
   handle: string;
   displayName: string;
@@ -720,12 +721,38 @@ function ParticipantTile({
   self?: boolean;
   isLocalCamera?: boolean;
   videoRef?: React.RefObject<HTMLVideoElement | null>;
+  remoteStream?: MediaStream;
 }) {
   const focused = focus >= 50;
+  const remoteVideoRef = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    if (remoteVideoRef.current && remoteStream) {
+      remoteVideoRef.current.srcObject = remoteStream;
+    }
+  }, [remoteStream]);
+
+  const hasRemoteVideo = !!remoteStream && remoteStream.getVideoTracks().some((t) => t.readyState === "live");
+
   return (
     <div className="relative rounded-xl bg-secondary/40 border border-border/60 overflow-hidden aspect-video group">
       {self && isLocalCamera ? (
         <video ref={videoRef} autoPlay muted playsInline className="absolute inset-0 w-full h-full object-cover" />
+      ) : remoteStream ? (
+        <>
+          <video
+            ref={remoteVideoRef}
+            autoPlay
+            playsInline
+            className={`absolute inset-0 w-full h-full object-cover ${hasRemoteVideo ? "" : "opacity-0"}`}
+          />
+          {!hasRemoteVideo && (
+            <div className="absolute inset-0 grid place-items-center">
+              <div className="size-16 rounded-full bg-primary/15 grid place-items-center border border-primary/30">
+                <span className="text-xl font-semibold text-primary">{displayName.slice(0, 1).toUpperCase()}</span>
+              </div>
+            </div>
+          )}
+        </>
       ) : (
         <div className="absolute inset-0 grid place-items-center">
           <div className="size-16 rounded-full bg-primary/15 grid place-items-center border border-primary/30">
