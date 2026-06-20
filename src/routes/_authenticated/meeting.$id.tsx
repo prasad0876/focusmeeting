@@ -77,7 +77,15 @@ function MeetingRoom() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const screenStreamRef = useRef<MediaStream | null>(null);
+  const cameraStreamRef = useRef<MediaStream | null>(null);
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const meetingStartRef = useRef<number>(Date.now());
+
+  const { remotePeers, replaceLocalStream } = useWebRTC({
+    meetingId,
+    userId: user.id,
+    localStream,
+  });
 
   const isHost = meeting?.host_id === user.id;
 
