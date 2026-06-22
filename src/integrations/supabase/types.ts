@@ -509,6 +509,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin: { Args: { _user: string }; Returns: boolean }
       is_meeting_host: {
         Args: { _meeting: string; _user: string }
         Returns: boolean

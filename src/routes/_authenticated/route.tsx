@@ -1,8 +1,9 @@
 import { createFileRoute, Outlet, redirect, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ShieldCheck, LayoutDashboard, Inbox, Plus, LogOut } from "lucide-react";
+import { ShieldCheck, LayoutDashboard, Inbox, Plus, LogOut, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useIsAdmin } from "@/hooks/use-admin";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -18,6 +19,7 @@ function AuthedLayout() {
   const { user } = Route.useRouteContext();
   const router = useRouter();
   const [handle, setHandle] = useState<string>("");
+  const { isAdmin } = useIsAdmin(user.id);
 
   useEffect(() => {
     supabase
@@ -49,6 +51,7 @@ function AuthedLayout() {
             <NavLink to="/dashboard" icon={<LayoutDashboard className="size-4" />} label="Dashboard" />
             <NavLink to="/invitations" icon={<Inbox className="size-4" />} label="Invitations" />
             <NavLink to="/new-meeting" icon={<Plus className="size-4" />} label="New meeting" />
+            {isAdmin && <NavLink to="/admin" icon={<Crown className="size-4" />} label="Admin" />}
           </nav>
           <div className="flex items-center gap-3">
             {handle && (
