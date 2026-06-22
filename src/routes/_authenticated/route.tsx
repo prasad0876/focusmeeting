@@ -1,8 +1,9 @@
 import { createFileRoute, Outlet, redirect, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ShieldCheck, LayoutDashboard, Inbox, Plus, LogOut } from "lucide-react";
+import { ShieldCheck, LayoutDashboard, Inbox, Plus, LogOut, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useIsAdmin } from "@/hooks/use-admin";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,

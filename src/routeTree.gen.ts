@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedNewMeetingRouteImport } from './routes/_authenticated/new-meeting'
 import { Route as AuthenticatedInvitationsRouteImport } from './routes/_authenticated/invitations'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedMemoryIdRouteImport } from './routes/_authenticated/memory.$id'
 import { Route as AuthenticatedMeetingIdRouteImport } from './routes/_authenticated/meeting.$id'
 
@@ -48,6 +49,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedMemoryIdRoute = AuthenticatedMemoryIdRouteImport.update({
   id: '/memory/$id',
   path: '/memory/$id',
@@ -62,6 +68,7 @@ const AuthenticatedMeetingIdRoute = AuthenticatedMeetingIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/admin': typeof AuthenticatedAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/invitations': typeof AuthenticatedInvitationsRoute
   '/new-meeting': typeof AuthenticatedNewMeetingRoute
@@ -71,6 +78,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/admin': typeof AuthenticatedAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/invitations': typeof AuthenticatedInvitationsRoute
   '/new-meeting': typeof AuthenticatedNewMeetingRoute
@@ -82,6 +90,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/invitations': typeof AuthenticatedInvitationsRoute
   '/_authenticated/new-meeting': typeof AuthenticatedNewMeetingRoute
@@ -93,6 +102,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/admin'
     | '/dashboard'
     | '/invitations'
     | '/new-meeting'
@@ -102,6 +112,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/admin'
     | '/dashboard'
     | '/invitations'
     | '/new-meeting'
@@ -112,6 +123,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/admin'
     | '/_authenticated/dashboard'
     | '/_authenticated/invitations'
     | '/_authenticated/new-meeting'
@@ -169,6 +181,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/memory/$id': {
       id: '/_authenticated/memory/$id'
       path: '/memory/$id'
@@ -187,6 +206,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedInvitationsRoute: typeof AuthenticatedInvitationsRoute
   AuthenticatedNewMeetingRoute: typeof AuthenticatedNewMeetingRoute
@@ -195,6 +215,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedInvitationsRoute: AuthenticatedInvitationsRoute,
   AuthenticatedNewMeetingRoute: AuthenticatedNewMeetingRoute,
