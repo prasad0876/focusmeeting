@@ -51,6 +51,7 @@ function AuthedLayout() {
             <NavLink to="/dashboard" icon={<LayoutDashboard className="size-4" />} label="Dashboard" />
             <NavLink to="/invitations" icon={<Inbox className="size-4" />} label="Invitations" />
             <NavLink to="/new-meeting" icon={<Plus className="size-4" />} label="New meeting" />
+            {isAdmin && <NavLink to="/admin" icon={<Crown className="size-4" />} label="Admin" />}
           </nav>
           <div className="flex items-center gap-3">
             {handle && (
