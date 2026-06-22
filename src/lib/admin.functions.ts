@@ -71,20 +71,19 @@ export const adminListMeetings = createServerFn({ method: "GET" })
     await assertAdmin(context);
     const { data, error } = await context.supabase
       .from("meetings")
-      .select("id, title, status, host_id, created_at, started_at, ended_at, host:profiles!meetings_host_id_fkey(handle, display_name)")
+      .select("id, title, status, host_id, created_at, started_at, ended_at")
       .order("created_at", { ascending: false })
       .limit(200);
-    if (error) {
-      // Fallback if FK alias not present
-      const { data: m2, error: e2 } = await context.supabase
-        .from("meetings")
-        .select("id, title, status, host_id, created_at, started_at, ended_at")
-        .order("created_at", { ascending: false })
-        .limit(200);
-      if (e2) throw new Error(e2.message);
-      return m2 ?? [];
-    }
-    return data ?? [];
+    if (error) throw new Error(error.message);
+    const meetings = data ?? [];
+    const hostIds = Array.from(new Set(meetings.map((m: any) => m.host_id)));
+    if (hostIds.length === 0) return meetings;
+    const { data: profs } = await context.supabase
+      .from("profiles")
+      .select("id, handle, display_name")
+      .in("id", hostIds);
+    const map = new Map((profs ?? []).map((p: any) => [p.id, p]));
+    return meetings.map((m: any) => ({ ...m, host: map.get(m.host_id) ?? null }));
   });
 
 export const adminEndMeeting = createServerFn({ method: "POST" })
