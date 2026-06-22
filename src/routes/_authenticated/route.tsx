@@ -19,6 +19,7 @@ function AuthedLayout() {
   const { user } = Route.useRouteContext();
   const router = useRouter();
   const [handle, setHandle] = useState<string>("");
+  const { isAdmin } = useIsAdmin(user.id);
 
   useEffect(() => {
     supabase
