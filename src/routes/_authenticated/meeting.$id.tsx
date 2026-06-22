@@ -88,7 +88,8 @@ function MeetingRoom() {
     localStream,
   });
 
-  const isHost = meeting?.host_id === user.id;
+  const { isAdmin } = useIsAdmin(user.id);
+  const isHost = meeting?.host_id === user.id || isAdmin;
 
   // Load meeting + join + subscribe
   useEffect(() => {
