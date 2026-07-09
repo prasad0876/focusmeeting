@@ -65,6 +65,62 @@ export type Database = {
           },
         ]
       }
+      departments: {
+        Row: {
+          code: string
+          created_at: string
+          hod_id: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          hod_id?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          hod_id?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      faculty_sections: {
+        Row: {
+          assigned_at: string
+          faculty_id: string
+          id: string
+          section_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          faculty_id: string
+          id?: string
+          section_id: string
+        }
+        Update: {
+          assigned_at?: string
+          faculty_id?: string
+          id?: string
+          section_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faculty_sections_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       focus_samples: {
         Row: {
           created_at: string
@@ -358,11 +414,15 @@ export type Database = {
       meetings: {
         Row: {
           created_at: string
+          department_id: string | null
           description: string | null
           ended_at: string | null
           host_id: string
           id: string
+          is_locked: boolean
           scheduled_at: string | null
+          scope: Database["public"]["Enums"]["meeting_scope"]
+          section_id: string | null
           started_at: string | null
           status: Database["public"]["Enums"]["meeting_status"]
           title: string
@@ -370,11 +430,15 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          department_id?: string | null
           description?: string | null
           ended_at?: string | null
           host_id: string
           id?: string
+          is_locked?: boolean
           scheduled_at?: string | null
+          scope?: Database["public"]["Enums"]["meeting_scope"]
+          section_id?: string | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["meeting_status"]
           title: string
@@ -382,50 +446,147 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          department_id?: string | null
           description?: string | null
           ended_at?: string | null
           host_id?: string
           id?: string
+          is_locked?: boolean
           scheduled_at?: string | null
+          scope?: Database["public"]["Enums"]["meeting_scope"]
+          section_id?: string | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["meeting_status"]
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "meetings_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meetings_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "sections"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
           avatar_url: string | null
           created_at: string
+          department_id: string | null
           display_name: string
           handle: string
           id: string
           is_blacklisted: boolean
           reputation: number
+          status: Database["public"]["Enums"]["account_status"]
           updated_at: string
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          department_id?: string | null
           display_name: string
           handle: string
           id: string
           is_blacklisted?: boolean
           reputation?: number
+          status?: Database["public"]["Enums"]["account_status"]
           updated_at?: string
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
+          department_id?: string | null
           display_name?: string
           handle?: string
           id?: string
           is_blacklisted?: boolean
           reputation?: number
+          status?: Database["public"]["Enums"]["account_status"]
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sections: {
+        Row: {
+          created_at: string
+          department_id: string
+          id: string
+          is_locked: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          department_id: string
+          id?: string
+          is_locked?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          department_id?: string
+          id?: string
+          is_locked?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sections_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_sections: {
+        Row: {
+          enrolled_at: string
+          id: string
+          section_id: string
+          student_id: string
+        }
+        Insert: {
+          enrolled_at?: string
+          id?: string
+          section_id: string
+          student_id: string
+        }
+        Update: {
+          enrolled_at?: string
+          id?: string
+          section_id?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_sections_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "sections"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -501,6 +662,10 @@ export type Database = {
         Args: { _meeting: string; _user: string }
         Returns: boolean
       }
+      faculty_of_section: {
+        Args: { _section: string; _user: string }
+        Returns: boolean
+      }
       generate_unique_handle: { Args: { _base: string }; Returns: string }
       has_role: {
         Args: {
@@ -509,16 +674,31 @@ export type Database = {
         }
         Returns: boolean
       }
+      in_department: {
+        Args: { _dept: string; _user: string }
+        Returns: boolean
+      }
       is_admin: { Args: { _user: string }; Returns: boolean }
+      is_hod_of: { Args: { _dept: string; _user: string }; Returns: boolean }
       is_meeting_host: {
         Args: { _meeting: string; _user: string }
+        Returns: boolean
+      }
+      primary_role: {
+        Args: { _user: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      student_of_section: {
+        Args: { _section: string; _user: string }
         Returns: boolean
       }
     }
     Enums: {
       abuse_severity: "low" | "moderate" | "high" | "severe"
-      app_role: "admin" | "user"
+      account_status: "active" | "suspended"
+      app_role: "admin" | "hod" | "faculty" | "student"
       invitation_status: "pending" | "accepted" | "declined" | "cancelled"
+      meeting_scope: "university" | "department" | "section" | "adhoc"
       meeting_status: "scheduled" | "live" | "ended"
     }
     CompositeTypes: {
@@ -648,8 +828,10 @@ export const Constants = {
   public: {
     Enums: {
       abuse_severity: ["low", "moderate", "high", "severe"],
-      app_role: ["admin", "user"],
+      account_status: ["active", "suspended"],
+      app_role: ["admin", "hod", "faculty", "student"],
       invitation_status: ["pending", "accepted", "declined", "cancelled"],
+      meeting_scope: ["university", "department", "section", "adhoc"],
       meeting_status: ["scheduled", "live", "ended"],
     },
   },
