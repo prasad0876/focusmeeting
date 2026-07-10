@@ -11,8 +11,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Video, VideoOff, Mic, MicOff, PhoneOff, Send, ShieldAlert,
   Eye, EyeOff, Users, AlertTriangle, Sparkles, MonitorUp, MonitorOff,
-  BookOpenText, Captions, Presentation,
+  BookOpenText, Captions, Presentation, UserPlus, UserMinus, Check, X, Hand, MessageSquare,
 } from "lucide-react";
+
 import { toast } from "sonner";
 import { Whiteboard } from "@/components/Whiteboard";
 import { useWebRTC } from "@/hooks/use-webrtc";
