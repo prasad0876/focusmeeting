@@ -533,6 +533,61 @@ function MeetingRoom() {
     }
   }, [participants, isHost]);
 
+  const inviteUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const handle = inviteHandle.trim().replace(/^@/, "").toLowerCase();
+    if (!handle) return;
+    setInviting(true);
+    try {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id, handle")
+        .eq("handle", handle)
+        .maybeSingle();
+      if (!profile) {
+        toast.error(`No user with handle @${handle}`);
+        return;
+      }
+      if (profile.id === user.id) {
+        toast.error("You're already in the meeting");
+        return;
+      }
+      const { error } = await supabase.from("meeting_invitations").upsert(
+        { meeting_id: meetingId, inviter_id: user.id, invitee_id: profile.id, status: "pending" },
+        { onConflict: "meeting_id,invitee_id" },
+      );
+      if (error) throw error;
+      toast.success(`Invitation sent to @${profile.handle}`);
+      setInviteHandle("");
+    } catch (err: any) {
+      toast.error(err?.message ?? "Could not invite");
+    } finally {
+      setInviting(false);
+    }
+  };
+
+  const kickParticipant = async (targetId: string, handle: string) => {
+    if (!confirm(`Remove @${handle} from the meeting?`)) return;
+    const { error } = await supabase
+      .from("meeting_participants")
+      .update({ is_removed: true, left_at: new Date().toISOString() })
+      .eq("meeting_id", meetingId)
+      .eq("user_id", targetId);
+    if (error) toast.error(error.message);
+    else toast.success(`Removed @${handle}`);
+  };
+
+  const revokeShare = async (targetId: string) => {
+    await supabase.channel(`share:${meetingId}`).send({
+      type: "broadcast",
+      event: "revoke",
+      payload: { userId: targetId },
+    });
+    toast.success("Share permission revoked");
+  };
+
+
+
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     const content = draft.trim();
