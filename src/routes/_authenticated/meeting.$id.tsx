@@ -586,6 +586,16 @@ function MeetingRoom() {
     toast.success("Share permission revoked");
   };
 
+  const toggleMute = async (targetId: string, currentlyMuted: boolean) => {
+    await supabase
+      .from("meeting_participants")
+      .update({ is_muted: !currentlyMuted })
+      .eq("meeting_id", meetingId)
+      .eq("user_id", targetId);
+  };
+
+
+
 
 
   const sendMessage = async (e: React.FormEvent) => {
