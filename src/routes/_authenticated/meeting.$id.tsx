@@ -76,6 +76,13 @@ function MeetingRoom() {
   const [liveCaption, setLiveCaption] = useState<{ speaker: string; text: string } | null>(null);
   const [captionsOn, setCaptionsOn] = useState(true);
   const [whiteboardOpen, setWhiteboardOpen] = useState(false);
+  const [sidePanel, setSidePanel] = useState<"chat" | "people">("chat");
+  const [inviteHandle, setInviteHandle] = useState("");
+  const [inviting, setInviting] = useState(false);
+  const [shareRequests, setShareRequests] = useState<Array<{ userId: string; handle: string }>>([]);
+  const [shareApproved, setShareApproved] = useState(false);
+  const [awaitingShareApproval, setAwaitingShareApproval] = useState(false);
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const screenStreamRef = useRef<MediaStream | null>(null);
