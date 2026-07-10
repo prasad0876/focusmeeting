@@ -443,6 +443,50 @@ function MeetingRoom() {
     return () => { supabase.removeChannel(ch); };
   }, [meetingId, user.id, captionsOn]);
 
+  // Auto-leave when the host removes me
+  useEffect(() => {
+    const me = participants.find((p) => p.user_id === user.id);
+    if (me?.is_removed) {
+      toast.error("You were removed from the meeting by the host.");
+      leaveAndExit();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [participants, user.id]);
+
+  // Screen-share request/approval channel (broadcast, so no DB writes needed)
+  useEffect(() => {
+    if (!meetingId || !user.id) return;
+    const ch = supabase.channel(`share:${meetingId}`, {
+      config: { broadcast: { self: false } },
+    });
+    ch.on("broadcast", { event: "request" }, ({ payload }) => {
+      if (!isHost) return;
+      const p = payload as { userId: string; handle: string };
+      setShareRequests((prev) => (prev.some((r) => r.userId === p.userId) ? prev : [...prev, p]));
+      toast.message(`@${p.handle} wants to share their screen`, {
+        action: { label: "View", onClick: () => setSidePanel("people") },
+      });
+    });
+    ch.on("broadcast", { event: "response" }, ({ payload }) => {
+      const p = payload as { userId: string; approved: boolean };
+      if (p.userId !== user.id) return;
+      setAwaitingShareApproval(false);
+      if (p.approved) {
+        setShareApproved(true);
+        toast.success("Host approved screen share");
+        void startScreenShareInternal();
+      } else {
+        toast.error("Host denied screen share");
+      }
+    });
+    ch.on("broadcast", { event: "revoke" }, ({ payload }) => {
+      const p = payload as { userId: string };
+      if (p.userId === user.id) setShareApproved(false);
+    });
+    ch.subscribe();
+    return () => { supabase.removeChannel(ch); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [meetingId, user.id, isHost]);
 
 
   // Host aggregate alert
