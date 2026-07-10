@@ -11,8 +11,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Video, VideoOff, Mic, MicOff, PhoneOff, Send, ShieldAlert,
   Eye, EyeOff, Users, AlertTriangle, Sparkles, MonitorUp, MonitorOff,
-  BookOpenText, Captions, Presentation,
+  BookOpenText, Captions, Presentation, UserPlus, UserMinus, Check, X, Hand, MessageSquare,
 } from "lucide-react";
+
 import { toast } from "sonner";
 import { Whiteboard } from "@/components/Whiteboard";
 import { useWebRTC } from "@/hooks/use-webrtc";
@@ -75,6 +76,13 @@ function MeetingRoom() {
   const [liveCaption, setLiveCaption] = useState<{ speaker: string; text: string } | null>(null);
   const [captionsOn, setCaptionsOn] = useState(true);
   const [whiteboardOpen, setWhiteboardOpen] = useState(false);
+  const [sidePanel, setSidePanel] = useState<"chat" | "people">("chat");
+  const [inviteHandle, setInviteHandle] = useState("");
+  const [inviting, setInviting] = useState(false);
+  const [shareRequests, setShareRequests] = useState<Array<{ userId: string; handle: string }>>([]);
+  const [shareApproved, setShareApproved] = useState(false);
+  const [awaitingShareApproval, setAwaitingShareApproval] = useState(false);
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const screenStreamRef = useRef<MediaStream | null>(null);
@@ -228,16 +236,15 @@ function MeetingRoom() {
     }
   };
 
-  const startScreenShare = async () => {
+  const startScreenShareInternal = async () => {
     try {
       const stream = await navigator.mediaDevices.getDisplayMedia({
         video: { frameRate: 30 },
-        audio: true, // Capture tab/system audio when the browser allows it
+        audio: true,
       });
       screenStreamRef.current = stream;
       setSharingScreen(true);
 
-      // Combine screen video + (screen audio OR mic audio) into one outbound stream
       const out = new MediaStream();
       stream.getVideoTracks().forEach((t) => out.addTrack(t));
       const screenAudio = stream.getAudioTracks();
@@ -258,6 +265,35 @@ function MeetingRoom() {
       }
     }
   };
+
+  const requestScreenShare = async () => {
+    if (isHost || shareApproved) {
+      await startScreenShareInternal();
+      return;
+    }
+    if (awaitingShareApproval) {
+      toast.info("Waiting for host approval…");
+      return;
+    }
+    const myHandle = participants.find((p) => p.user_id === user.id)?.profile?.handle ?? "user";
+    await supabase.channel(`share:${meetingId}`).send({
+      type: "broadcast",
+      event: "request",
+      payload: { userId: user.id, handle: myHandle },
+    });
+    setAwaitingShareApproval(true);
+    toast.info("Request sent to host");
+  };
+
+  const respondToShareRequest = async (targetUserId: string, approved: boolean) => {
+    await supabase.channel(`share:${meetingId}`).send({
+      type: "broadcast",
+      event: "response",
+      payload: { userId: targetUserId, approved },
+    });
+    setShareRequests((prev) => prev.filter((r) => r.userId !== targetUserId));
+  };
+
 
 
   // Focus detection (privacy-first: local heuristic based on tab visibility + small drift)
@@ -435,6 +471,50 @@ function MeetingRoom() {
     return () => { supabase.removeChannel(ch); };
   }, [meetingId, user.id, captionsOn]);
 
+  // Auto-leave when the host removes me
+  useEffect(() => {
+    const me = participants.find((p) => p.user_id === user.id);
+    if (me?.is_removed) {
+      toast.error("You were removed from the meeting by the host.");
+      leaveAndExit();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [participants, user.id]);
+
+  // Screen-share request/approval channel (broadcast, so no DB writes needed)
+  useEffect(() => {
+    if (!meetingId || !user.id) return;
+    const ch = supabase.channel(`share:${meetingId}`, {
+      config: { broadcast: { self: false } },
+    });
+    ch.on("broadcast", { event: "request" }, ({ payload }) => {
+      if (!isHost) return;
+      const p = payload as { userId: string; handle: string };
+      setShareRequests((prev) => (prev.some((r) => r.userId === p.userId) ? prev : [...prev, p]));
+      toast.message(`@${p.handle} wants to share their screen`, {
+        action: { label: "View", onClick: () => setSidePanel("people") },
+      });
+    });
+    ch.on("broadcast", { event: "response" }, ({ payload }) => {
+      const p = payload as { userId: string; approved: boolean };
+      if (p.userId !== user.id) return;
+      setAwaitingShareApproval(false);
+      if (p.approved) {
+        setShareApproved(true);
+        toast.success("Host approved screen share");
+        void startScreenShareInternal();
+      } else {
+        toast.error("Host denied screen share");
+      }
+    });
+    ch.on("broadcast", { event: "revoke" }, ({ payload }) => {
+      const p = payload as { userId: string };
+      if (p.userId === user.id) setShareApproved(false);
+    });
+    ch.subscribe();
+    return () => { supabase.removeChannel(ch); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [meetingId, user.id, isHost]);
 
 
   // Host aggregate alert
@@ -452,6 +532,71 @@ function MeetingRoom() {
       setHostAlert(null);
     }
   }, [participants, isHost]);
+
+  const inviteUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const handle = inviteHandle.trim().replace(/^@/, "").toLowerCase();
+    if (!handle) return;
+    setInviting(true);
+    try {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id, handle")
+        .eq("handle", handle)
+        .maybeSingle();
+      if (!profile) {
+        toast.error(`No user with handle @${handle}`);
+        return;
+      }
+      if (profile.id === user.id) {
+        toast.error("You're already in the meeting");
+        return;
+      }
+      const { error } = await supabase.from("meeting_invitations").upsert(
+        { meeting_id: meetingId, inviter_id: user.id, invitee_id: profile.id, status: "pending" },
+        { onConflict: "meeting_id,invitee_id" },
+      );
+      if (error) throw error;
+      toast.success(`Invitation sent to @${profile.handle}`);
+      setInviteHandle("");
+    } catch (err: any) {
+      toast.error(err?.message ?? "Could not invite");
+    } finally {
+      setInviting(false);
+    }
+  };
+
+  const kickParticipant = async (targetId: string, handle: string) => {
+    if (!confirm(`Remove @${handle} from the meeting?`)) return;
+    const { error } = await supabase
+      .from("meeting_participants")
+      .update({ is_removed: true, left_at: new Date().toISOString() })
+      .eq("meeting_id", meetingId)
+      .eq("user_id", targetId);
+    if (error) toast.error(error.message);
+    else toast.success(`Removed @${handle}`);
+  };
+
+  const revokeShare = async (targetId: string) => {
+    await supabase.channel(`share:${meetingId}`).send({
+      type: "broadcast",
+      event: "revoke",
+      payload: { userId: targetId },
+    });
+    toast.success("Share permission revoked");
+  };
+
+  const toggleMute = async (targetId: string, currentlyMuted: boolean) => {
+    await supabase
+      .from("meeting_participants")
+      .update({ is_muted: !currentlyMuted })
+      .eq("meeting_id", meetingId)
+      .eq("user_id", targetId);
+  };
+
+
+
+
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -573,7 +718,7 @@ function MeetingRoom() {
           />
           <ControlBtn
             active={sharingScreen}
-            onClick={sharingScreen ? stopScreenShare : startScreenShare}
+            onClick={sharingScreen ? stopScreenShare : requestScreenShare}
             on={<MonitorUp className="size-4" />}
             off={<MonitorOff className="size-4" />}
           />
@@ -592,89 +737,208 @@ function MeetingRoom() {
 
       {/* Side panel */}
       <aside className="flex flex-col bg-surface min-h-0">
-        <div className="border-b border-border/60 px-4 py-3 flex items-center gap-2">
-          <Sparkles className="size-4 text-primary" />
-          <p className="text-sm font-medium">AI chat moderation</p>
-          <span className="ml-auto text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-            {incidents.length} flagged
-          </span>
+        <div className="border-b border-border/60 flex">
+          <button
+            onClick={() => setSidePanel("chat")}
+            className={`flex-1 px-4 py-3 text-sm flex items-center justify-center gap-2 border-b-2 transition ${
+              sidePanel === "chat" ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <MessageSquare className="size-4" /> Chat
+            {incidents.length > 0 && (
+              <span className="text-[10px] font-mono px-1.5 rounded bg-destructive/20 text-destructive">{incidents.length}</span>
+            )}
+          </button>
+          <button
+            onClick={() => setSidePanel("people")}
+            className={`flex-1 px-4 py-3 text-sm flex items-center justify-center gap-2 border-b-2 transition ${
+              sidePanel === "people" ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Users className="size-4" /> People
+            <span className="text-[10px] font-mono px-1.5 rounded bg-secondary">{active.length}</span>
+            {isHost && shareRequests.length > 0 && (
+              <span className="size-1.5 rounded-full bg-warning pulse-ring" />
+            )}
+          </button>
         </div>
 
-        <ScrollArea className="flex-1 px-4 py-3">
-          <div className="space-y-3">
-            {messages.length === 0 ? (
-              <p className="text-xs text-muted-foreground text-center py-8">
-                Every message is scanned by AI for abuse, harassment and threats before it lands.
-              </p>
-            ) : (
-              messages.map((m) => {
-                const participant = participants.find((p) => p.user_id === m.user_id);
-                const me = m.user_id === user.id;
-                return (
-                  <div key={m.id} className={`space-y-0.5 ${me ? "text-right" : ""}`}>
-                    <p className="text-[10px] font-mono text-muted-foreground">
-                      @{participant?.profile?.handle ?? "user"} · {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                    </p>
-                    <div
-                      className={`inline-block max-w-[85%] px-3 py-2 rounded-lg text-sm border ${
-                        m.is_flagged
-                          ? "border-destructive/40 bg-destructive/10 text-destructive-foreground"
-                          : me
-                          ? "border-primary/40 bg-primary/10"
-                          : "border-border/60 bg-secondary/40"
-                      }`}
-                    >
-                      {m.is_flagged && (
-                        <span className="block text-[10px] font-mono uppercase text-destructive mb-1 flex items-center gap-1">
-                          <ShieldAlert className="size-3" /> Flagged · {m.severity}
-                        </span>
-                      )}
-                      {m.content}
-                    </div>
-                  </div>
-                );
-              })
+        {sidePanel === "chat" ? (
+          <>
+            <ScrollArea className="flex-1 px-4 py-3">
+              <div className="space-y-3">
+                {messages.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-8">
+                    Every message is scanned by AI for abuse, harassment and threats before it lands.
+                  </p>
+                ) : (
+                  messages.map((m) => {
+                    const participant = participants.find((p) => p.user_id === m.user_id);
+                    const me = m.user_id === user.id;
+                    return (
+                      <div key={m.id} className={`space-y-0.5 ${me ? "text-right" : ""}`}>
+                        <p className="text-[10px] font-mono text-muted-foreground">
+                          @{participant?.profile?.handle ?? "user"} · {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        </p>
+                        <div
+                          className={`inline-block max-w-[85%] px-3 py-2 rounded-lg text-sm border ${
+                            m.is_flagged
+                              ? "border-destructive/40 bg-destructive/10 text-destructive-foreground"
+                              : me
+                              ? "border-primary/40 bg-primary/10"
+                              : "border-border/60 bg-secondary/40"
+                          }`}
+                        >
+                          {m.is_flagged && (
+                            <span className="block text-[10px] font-mono uppercase text-destructive mb-1 flex items-center gap-1">
+                              <ShieldAlert className="size-3" /> Flagged · {m.severity}
+                            </span>
+                          )}
+                          {m.content}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </ScrollArea>
+
+            <form onSubmit={sendMessage} className="border-t border-border/60 p-3 flex gap-2">
+              <Input
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                placeholder={myMuted ? "You are muted" : "Say something…"}
+                disabled={sending || !!myMuted}
+              />
+              <Button type="submit" size="sm" disabled={sending || !draft.trim() || !!myMuted}>
+                <Send className="size-4" />
+              </Button>
+            </form>
+
+            {isHost && incidents.length > 0 && (
+              <div className="border-t border-border/60 max-h-48">
+                <p className="px-4 py-2 text-xs font-mono uppercase text-muted-foreground flex items-center gap-1.5">
+                  <ShieldAlert className="size-3" /> Incident log
+                </p>
+                <ScrollArea className="h-36 px-4 pb-3">
+                  <ul className="space-y-1.5">
+                    {incidents.map((i) => {
+                      const p = participants.find((pp) => pp.user_id === i.user_id);
+                      return (
+                        <li key={i.id} className="text-xs flex items-start gap-2">
+                          <span className={`mt-0.5 size-1.5 rounded-full ${i.severity === "severe" ? "bg-destructive" : i.severity === "high" ? "bg-destructive/70" : "bg-warning"}`} />
+                          <span className="flex-1">
+                            <span className="font-mono text-foreground">@{p?.profile?.handle ?? "user"}</span>{" "}
+                            <span className="text-muted-foreground">{i.action_taken.replace("_", " ")}</span>
+                          </span>
+                          <span className="text-[10px] font-mono text-muted-foreground">{i.severity}</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </ScrollArea>
+              </div>
             )}
-          </div>
-        </ScrollArea>
+          </>
+        ) : (
+          <div className="flex-1 flex flex-col min-h-0">
+            {isHost && (
+              <form onSubmit={inviteUser} className="p-3 border-b border-border/60 space-y-2">
+                <p className="text-[10px] font-mono uppercase text-muted-foreground flex items-center gap-1.5">
+                  <UserPlus className="size-3" /> Invite by handle
+                </p>
+                <div className="flex gap-2">
+                  <Input
+                    value={inviteHandle}
+                    onChange={(e) => setInviteHandle(e.target.value)}
+                    placeholder="@handle"
+                    disabled={inviting}
+                  />
+                  <Button type="submit" size="sm" disabled={inviting || !inviteHandle.trim()}>
+                    <UserPlus className="size-4" />
+                  </Button>
+                </div>
+              </form>
+            )}
 
-        <form onSubmit={sendMessage} className="border-t border-border/60 p-3 flex gap-2">
-          <Input
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder={myMuted ? "You are muted" : "Say something…"}
-            disabled={sending || !!myMuted}
-          />
-          <Button type="submit" size="sm" disabled={sending || !draft.trim() || !!myMuted}>
-            <Send className="size-4" />
-          </Button>
-        </form>
+            {isHost && shareRequests.length > 0 && (
+              <div className="p-3 border-b border-border/60 space-y-2">
+                <p className="text-[10px] font-mono uppercase text-warning flex items-center gap-1.5">
+                  <Hand className="size-3" /> Screen-share requests
+                </p>
+                {shareRequests.map((r) => (
+                  <div key={r.userId} className="flex items-center gap-2 text-sm">
+                    <span className="flex-1 font-mono truncate">@{r.handle}</span>
+                    <Button size="sm" variant="secondary" onClick={() => respondToShareRequest(r.userId, true)}>
+                      <Check className="size-3" />
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => respondToShareRequest(r.userId, false)}>
+                      <X className="size-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
 
-        {isHost && incidents.length > 0 && (
-          <div className="border-t border-border/60 max-h-48">
-            <p className="px-4 py-2 text-xs font-mono uppercase text-muted-foreground flex items-center gap-1.5">
-              <Users className="size-3" /> Incident log
-            </p>
-            <ScrollArea className="h-36 px-4 pb-3">
-              <ul className="space-y-1.5">
-                {incidents.map((i) => {
-                  const p = participants.find((pp) => pp.user_id === i.user_id);
+            {!isHost && awaitingShareApproval && (
+              <div className="p-3 border-b border-border/60 text-xs text-warning flex items-center gap-2">
+                <Hand className="size-3" /> Waiting for host to approve your screen share…
+              </div>
+            )}
+
+            <ScrollArea className="flex-1 px-3 py-2">
+              <ul className="space-y-1">
+                {active.map((p) => {
+                  const isMe = p.user_id === user.id;
+                  const isTheHost = p.user_id === meeting?.host_id;
                   return (
-                    <li key={i.id} className="text-xs flex items-start gap-2">
-                      <span className={`mt-0.5 size-1.5 rounded-full ${i.severity === "severe" ? "bg-destructive" : i.severity === "high" ? "bg-destructive/70" : "bg-warning"}`} />
-                      <span className="flex-1">
-                        <span className="font-mono text-foreground">@{p?.profile?.handle ?? "user"}</span>{" "}
-                        <span className="text-muted-foreground">{i.action_taken.replace("_", " ")}</span>
-                      </span>
-                      <span className="text-[10px] font-mono text-muted-foreground">{i.severity}</span>
+                    <li key={p.id} className="flex items-center gap-2 p-2 rounded-lg hover:bg-secondary/40 group">
+                      <div className="size-8 rounded-full bg-primary/15 grid place-items-center text-xs font-semibold text-primary">
+                        {(p.profile?.display_name ?? "U").slice(0, 1).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm truncate">
+                          {p.profile?.display_name ?? "User"}
+                          {isMe && <span className="text-muted-foreground text-xs ml-1">(you)</span>}
+                          {isTheHost && <span className="text-primary text-[10px] font-mono ml-1">HOST</span>}
+                        </p>
+                        <p className="text-[10px] font-mono text-muted-foreground truncate">@{p.profile?.handle ?? "user"}</p>
+                      </div>
+                      {p.is_muted && <MicOff className="size-3 text-destructive" />}
+                      {isHost && !isMe && (
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                          <button
+                            onClick={() => toggleMute(p.user_id, p.is_muted)}
+                            title={p.is_muted ? "Unmute" : "Mute"}
+                            className="size-7 grid place-items-center rounded hover:bg-secondary"
+                          >
+                            {p.is_muted ? <Mic className="size-3" /> : <MicOff className="size-3" />}
+                          </button>
+                          <button
+                            onClick={() => kickParticipant(p.user_id, p.profile?.handle ?? "user")}
+                            title="Remove from meeting"
+                            className="size-7 grid place-items-center rounded hover:bg-destructive/20 text-destructive"
+                          >
+                            <UserMinus className="size-3" />
+                          </button>
+                        </div>
+                      )}
                     </li>
                   );
                 })}
               </ul>
             </ScrollArea>
+
+            <div className="p-3 border-t border-border/60 text-[10px] font-mono uppercase text-muted-foreground">
+              {isHost
+                ? "Hosts can invite, mute, remove and approve screen shares."
+                : "Only the host can invite or remove participants."}
+            </div>
           </div>
         )}
       </aside>
+
+
 
       {whiteboardOpen && (
         <Whiteboard meetingId={meetingId} userId={user.id} onClose={() => setWhiteboardOpen(false)} />

@@ -64,13 +64,19 @@ export function useWebRTC(opts: {
       pc = new RTCPeerConnection(RTC_CONFIG);
       pcsRef.current.set(peerId, pc);
 
-      // Attach current local tracks
-      const senders: RTCRtpSender[] = [];
+      // Pre-create sendrecv transceivers so the first SDP offer always
+      // negotiates video+audio m-lines, even before the local media stream
+      // is attached. Tracks are wired in via replaceTrack below.
+      const videoTx = pc.addTransceiver("video", { direction: "sendrecv" });
+      const audioTx = pc.addTransceiver("audio", { direction: "sendrecv" });
+
       const stream = localStreamRef.current;
+      const senders: RTCRtpSender[] = [videoTx.sender, audioTx.sender];
       if (stream) {
-        stream.getTracks().forEach((track) => {
-          senders.push(pc!.addTrack(track, stream));
-        });
+        const vt = stream.getVideoTracks()[0];
+        const at = stream.getAudioTracks()[0];
+        if (vt) videoTx.sender.replaceTrack(vt).catch(() => {});
+        if (at) audioTx.sender.replaceTrack(at).catch(() => {});
       }
       sendersRef.current.set(peerId, senders);
 
@@ -79,6 +85,7 @@ export function useWebRTC(opts: {
           send({ kind: "ice", from: userId, to: peerId, candidate: ev.candidate.toJSON() });
         }
       };
+
 
       const remoteStream = new MediaStream();
       pc.ontrack = (ev) => {
