@@ -236,16 +236,15 @@ function MeetingRoom() {
     }
   };
 
-  const startScreenShare = async () => {
+  const startScreenShareInternal = async () => {
     try {
       const stream = await navigator.mediaDevices.getDisplayMedia({
         video: { frameRate: 30 },
-        audio: true, // Capture tab/system audio when the browser allows it
+        audio: true,
       });
       screenStreamRef.current = stream;
       setSharingScreen(true);
 
-      // Combine screen video + (screen audio OR mic audio) into one outbound stream
       const out = new MediaStream();
       stream.getVideoTracks().forEach((t) => out.addTrack(t));
       const screenAudio = stream.getAudioTracks();
@@ -266,6 +265,35 @@ function MeetingRoom() {
       }
     }
   };
+
+  const requestScreenShare = async () => {
+    if (isHost || shareApproved) {
+      await startScreenShareInternal();
+      return;
+    }
+    if (awaitingShareApproval) {
+      toast.info("Waiting for host approval…");
+      return;
+    }
+    const myHandle = participants.find((p) => p.user_id === user.id)?.profile?.handle ?? "user";
+    await supabase.channel(`share:${meetingId}`).send({
+      type: "broadcast",
+      event: "request",
+      payload: { userId: user.id, handle: myHandle },
+    });
+    setAwaitingShareApproval(true);
+    toast.info("Request sent to host");
+  };
+
+  const respondToShareRequest = async (targetUserId: string, approved: boolean) => {
+    await supabase.channel(`share:${meetingId}`).send({
+      type: "broadcast",
+      event: "response",
+      payload: { userId: targetUserId, approved },
+    });
+    setShareRequests((prev) => prev.filter((r) => r.userId !== targetUserId));
+  };
+
 
 
   // Focus detection (privacy-first: local heuristic based on tab visibility + small drift)
