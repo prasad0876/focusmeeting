@@ -653,7 +653,7 @@ function MeetingRoom() {
           />
           <ControlBtn
             active={sharingScreen}
-            onClick={sharingScreen ? stopScreenShare : startScreenShare}
+            onClick={sharingScreen ? stopScreenShare : requestScreenShare}
             on={<MonitorUp className="size-4" />}
             off={<MonitorOff className="size-4" />}
           />
