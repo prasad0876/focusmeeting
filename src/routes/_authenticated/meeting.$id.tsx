@@ -646,6 +646,10 @@ function MeetingRoom() {
   };
 
   const endMeeting = async () => {
+    if (!isHost) {
+      toast.error("Only the host or an admin can end the meeting.");
+      return;
+    }
     await supabase.from("meetings").update({ status: "ended", ended_at: new Date().toISOString() }).eq("id", meetingId);
     leaveAndExit();
   };
