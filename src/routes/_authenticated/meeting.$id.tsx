@@ -286,6 +286,10 @@ function MeetingRoom() {
   };
 
   const respondToShareRequest = async (targetUserId: string, approved: boolean) => {
+    if (!isHost) {
+      toast.error("Only the host or an admin can approve screen shares.");
+      return;
+    }
     await supabase.channel(`share:${meetingId}`).send({
       type: "broadcast",
       event: "response",
