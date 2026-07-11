@@ -286,6 +286,10 @@ function MeetingRoom() {
   };
 
   const respondToShareRequest = async (targetUserId: string, approved: boolean) => {
+    if (!isHost) {
+      toast.error("Only the host or an admin can approve screen shares.");
+      return;
+    }
     await supabase.channel(`share:${meetingId}`).send({
       type: "broadcast",
       event: "response",
@@ -535,6 +539,10 @@ function MeetingRoom() {
 
   const inviteUser = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isHost) {
+      toast.error("Only the host or an admin can invite people.");
+      return;
+    }
     const handle = inviteHandle.trim().replace(/^@/, "").toLowerCase();
     if (!handle) return;
     setInviting(true);
@@ -567,6 +575,10 @@ function MeetingRoom() {
   };
 
   const kickParticipant = async (targetId: string, handle: string) => {
+    if (!isHost) {
+      toast.error("Only the host or an admin can remove participants.");
+      return;
+    }
     if (!confirm(`Remove @${handle} from the meeting?`)) return;
     const { error } = await supabase
       .from("meeting_participants")
@@ -578,6 +590,7 @@ function MeetingRoom() {
   };
 
   const revokeShare = async (targetId: string) => {
+    if (!isHost) return;
     await supabase.channel(`share:${meetingId}`).send({
       type: "broadcast",
       event: "revoke",
@@ -587,6 +600,10 @@ function MeetingRoom() {
   };
 
   const toggleMute = async (targetId: string, currentlyMuted: boolean) => {
+    if (!isHost) {
+      toast.error("Only the host or an admin can mute participants.");
+      return;
+    }
     await supabase
       .from("meeting_participants")
       .update({ is_muted: !currentlyMuted })
@@ -629,6 +646,10 @@ function MeetingRoom() {
   };
 
   const endMeeting = async () => {
+    if (!isHost) {
+      toast.error("Only the host or an admin can end the meeting.");
+      return;
+    }
     await supabase.from("meetings").update({ status: "ended", ended_at: new Date().toISOString() }).eq("id", meetingId);
     leaveAndExit();
   };
