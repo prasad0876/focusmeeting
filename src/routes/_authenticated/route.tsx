@@ -1,9 +1,10 @@
 import { createFileRoute, Outlet, redirect, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ShieldCheck, LayoutDashboard, Inbox, Plus, LogOut, Crown, ClipboardList } from "lucide-react";
+import { ShieldCheck, LayoutDashboard, Inbox, Plus, LogOut, Crown, ClipboardList, CalendarCheck, GraduationCap, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useIsAdmin } from "@/hooks/use-admin";
+import { Card } from "@/components/ui/card";
+import { useMyRole } from "@/hooks/use-my-role";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -19,7 +20,7 @@ function AuthedLayout() {
   const { user } = Route.useRouteContext();
   const router = useRouter();
   const [handle, setHandle] = useState<string>("");
-  const { isAdmin } = useIsAdmin(user.id);
+  const { role, status, isAdmin, isDeo, isHod, canManageInstitution, canTeach } = useMyRole(user.id);
 
   useEffect(() => {
     supabase
@@ -49,16 +50,24 @@ function AuthedLayout() {
           </Link>
           <nav className="hidden md:flex items-center gap-1">
             <NavLink to="/dashboard" icon={<LayoutDashboard className="size-4" />} label="Dashboard" />
-            <NavLink to="/invitations" icon={<Inbox className="size-4" />} label="Invitations" />
-            <NavLink to="/new-meeting" icon={<Plus className="size-4" />} label="New meeting" />
-            <NavLink to="/assessments" icon={<ClipboardList className="size-4" />} label="Assessments" />
-            {isAdmin && <NavLink to="/admin" icon={<Crown className="size-4" />} label="Admin" />}
+            {status === "active" && (
+              <>
+                <NavLink to="/invitations" icon={<Inbox className="size-4" />} label="Invitations" />
+                {canTeach && <NavLink to="/new-meeting" icon={<Plus className="size-4" />} label="New meeting" />}
+                <NavLink to="/assessments" icon={<ClipboardList className="size-4" />} label="Assessments" />
+                {canTeach && <NavLink to="/attendance" icon={<CalendarCheck className="size-4" />} label="Attendance" />}
+                {canTeach && <NavLink to="/gradebook" icon={<GraduationCap className="size-4" />} label="Gradebook" />}
+                {(isAdmin || isDeo) && <NavLink to="/admin" icon={<Crown className="size-4" />} label={isAdmin ? "Admin" : "DEO"} />}
+                {isHod && <NavLink to="/admin" icon={<Crown className="size-4" />} label="HOD" />}
+              </>
+            )}
           </nav>
           <div className="flex items-center gap-3">
             {handle && (
               <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-mono px-2.5 py-1 rounded-md bg-secondary/60 border border-border/60">
-                <span className="size-1.5 rounded-full bg-success animate-pulse" />
+                <span className={`size-1.5 rounded-full ${status === "active" ? "bg-success animate-pulse" : "bg-warning"}`} />
                 @{handle}
+                {role && status === "active" && <span className="uppercase text-[10px] text-primary">· {role}</span>}
               </span>
             )}
             <Button variant="ghost" size="sm" onClick={signOut}>
@@ -68,8 +77,33 @@ function AuthedLayout() {
         </div>
       </header>
       <main className="flex-1">
-        <Outlet />
+        {status === "pending" ? <PendingScreen /> : status === "rejected" ? <RejectedScreen /> : <Outlet />}
       </main>
+    </div>
+  );
+}
+
+function PendingScreen() {
+  return (
+    <div className="max-w-lg mx-auto px-6 py-20">
+      <Card className="p-8 text-center bg-surface border-border/60 space-y-3">
+        <Clock className="size-10 mx-auto text-warning" />
+        <h2 className="text-xl font-semibold">Awaiting approval</h2>
+        <p className="text-sm text-muted-foreground">
+          Your account is pending review. An admin or DEO will assign you a role and section shortly.
+        </p>
+      </Card>
+    </div>
+  );
+}
+function RejectedScreen() {
+  return (
+    <div className="max-w-lg mx-auto px-6 py-20">
+      <Card className="p-8 text-center bg-surface border-border/60 space-y-3">
+        <ShieldCheck className="size-10 mx-auto text-destructive" />
+        <h2 className="text-xl font-semibold">Access denied</h2>
+        <p className="text-sm text-muted-foreground">Your sign-up was not approved. Please contact your institution.</p>
+      </Card>
     </div>
   );
 }
