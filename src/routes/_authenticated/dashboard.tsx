@@ -1,10 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Calendar, Inbox, Plus, Video, Copy, Check } from "lucide-react";
+import { Calendar, Inbox, Plus, Video, Copy, Check, CalendarCheck, GraduationCap } from "lucide-react";
 import { toast } from "sonner";
+import { myAttendance, myGrades } from "@/lib/school.functions";
+import { useMyRole } from "@/hooks/use-my-role";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard · Sentinel.meet" }] }),
