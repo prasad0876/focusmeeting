@@ -52,6 +52,7 @@ Add these exact variables (replace placeholders where noted):
 
 Notes:
 - The publishable key above is already present in your local `.env`. Do NOT store any Supabase service role secret here — that belongs only in Supabase dashboard or secure server-only variables.
+- Netlify will now also use Node 20 through `.nvmrc` and the build environment pin in `netlify.toml`.
 
 ## 3) Google Cloud — create OAuth client
 
