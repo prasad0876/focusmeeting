@@ -159,6 +159,53 @@ export type Database = {
           },
         ]
       }
+      attendance: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          marked_by: string | null
+          notes: string | null
+          section_id: string
+          slot: number
+          status: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          marked_by?: string | null
+          notes?: string | null
+          section_id: string
+          slot?: number
+          status: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          marked_by?: string | null
+          notes?: string | null
+          section_id?: string
+          slot?: number
+          status?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       departments: {
         Row: {
           code: string
@@ -243,6 +290,59 @@ export type Database = {
             columns: ["meeting_id"]
             isOneToOne: false
             referencedRelation: "meetings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gradebook_entries: {
+        Row: {
+          created_at: string
+          entered_by: string | null
+          exam_type: string
+          id: string
+          marks: number
+          max_marks: number
+          notes: string | null
+          section_id: string
+          student_id: string
+          subject: string
+          term: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          entered_by?: string | null
+          exam_type: string
+          id?: string
+          marks: number
+          max_marks?: number
+          notes?: string | null
+          section_id: string
+          student_id: string
+          subject: string
+          term?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          entered_by?: string | null
+          exam_type?: string
+          id?: string
+          marks?: number
+          max_marks?: number
+          notes?: string | null
+          section_id?: string
+          student_id?: string
+          subject?: string
+          term?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gradebook_entries_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "sections"
             referencedColumns: ["id"]
           },
         ]
@@ -625,6 +725,7 @@ export type Database = {
           id: string
           is_locked: boolean
           name: string
+          slot_count: number
           updated_at: string
         }
         Insert: {
@@ -633,6 +734,7 @@ export type Database = {
           id?: string
           is_locked?: boolean
           name: string
+          slot_count?: number
           updated_at?: string
         }
         Update: {
@@ -641,6 +743,7 @@ export type Database = {
           id?: string
           is_locked?: boolean
           name?: string
+          slot_count?: number
           updated_at?: string
         }
         Relationships: [
@@ -773,6 +876,8 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user: string }; Returns: boolean }
+      is_admin_or_deo: { Args: { _user: string }; Returns: boolean }
+      is_deo: { Args: { _user: string }; Returns: boolean }
       is_hod_of: { Args: { _dept: string; _user: string }; Returns: boolean }
       is_meeting_host: {
         Args: { _meeting: string; _user: string }
@@ -789,8 +894,8 @@ export type Database = {
     }
     Enums: {
       abuse_severity: "low" | "moderate" | "high" | "severe"
-      account_status: "active" | "suspended"
-      app_role: "admin" | "hod" | "faculty" | "student"
+      account_status: "active" | "suspended" | "pending" | "rejected"
+      app_role: "admin" | "hod" | "faculty" | "student" | "deo"
       invitation_status: "pending" | "accepted" | "declined" | "cancelled"
       meeting_scope: "university" | "department" | "section" | "adhoc"
       meeting_status: "scheduled" | "live" | "ended"
@@ -922,8 +1027,8 @@ export const Constants = {
   public: {
     Enums: {
       abuse_severity: ["low", "moderate", "high", "severe"],
-      account_status: ["active", "suspended"],
-      app_role: ["admin", "hod", "faculty", "student"],
+      account_status: ["active", "suspended", "pending", "rejected"],
+      app_role: ["admin", "hod", "faculty", "student", "deo"],
       invitation_status: ["pending", "accepted", "declined", "cancelled"],
       meeting_scope: ["university", "department", "section", "adhoc"],
       meeting_status: ["scheduled", "live", "ended"],

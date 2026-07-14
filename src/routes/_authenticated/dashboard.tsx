@@ -1,10 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Calendar, Inbox, Plus, Video, Copy, Check } from "lucide-react";
+import { Calendar, Inbox, Plus, Video, Copy, Check, CalendarCheck, GraduationCap } from "lucide-react";
 import { toast } from "sonner";
+import { myAttendance, myGrades } from "@/lib/school.functions";
+import { useMyRole } from "@/hooks/use-my-role";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard · Sentinel.meet" }] }),
@@ -16,10 +19,21 @@ type Meeting = { id: string; title: string; status: string; created_at: string; 
 
 function Dashboard() {
   const { user } = Route.useRouteContext();
+  const { isStudent } = useMyRole(user.id);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [invitationCount, setInvitationCount] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [attendance, setAttendance] = useState<any[]>([]);
+  const [grades, setGrades] = useState<any[]>([]);
+  const attFn = useServerFn(myAttendance);
+  const gradeFn = useServerFn(myGrades);
+
+  useEffect(() => {
+    if (!isStudent) return;
+    attFn().then((r: any) => setAttendance(r)).catch(() => {});
+    gradeFn().then((r: any) => setGrades(r)).catch(() => {});
+  }, [isStudent]); // eslint-disable-line
 
   useEffect(() => {
     let active = true;
@@ -156,6 +170,41 @@ function Dashboard() {
           </div>
         )}
       </section>
+
+      {isStudent && (
+        <section className="grid md:grid-cols-2 gap-4">
+          <Card className="p-5 bg-surface border-border/60 space-y-3">
+            <div className="flex items-center gap-2"><CalendarCheck className="size-4 text-primary" /><h3 className="font-medium">Recent attendance</h3></div>
+            {attendance.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No attendance recorded yet.</p>
+            ) : (
+              <ul className="text-sm divide-y divide-border/60">
+                {attendance.slice(0, 8).map((a) => (
+                  <li key={a.id} className="py-2 flex items-center justify-between">
+                    <span className="text-muted-foreground text-xs">{a.date} · slot {a.slot} · {a.section_name}</span>
+                    <span className={`text-xs font-mono uppercase ${a.status === "present" ? "text-success" : a.status === "late" ? "text-warning" : "text-destructive"}`}>{a.status}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+          <Card className="p-5 bg-surface border-border/60 space-y-3">
+            <div className="flex items-center gap-2"><GraduationCap className="size-4 text-primary" /><h3 className="font-medium">My marks</h3></div>
+            {grades.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No marks recorded yet.</p>
+            ) : (
+              <ul className="text-sm divide-y divide-border/60">
+                {grades.slice(0, 8).map((g) => (
+                  <li key={g.id} className="py-2 flex items-center justify-between gap-2">
+                    <span className="truncate">{g.subject} <span className="text-xs text-muted-foreground">· {g.exam_type}{g.term ? ` · ${g.term}` : ""}</span></span>
+                    <span className="text-xs font-mono tabular-nums">{g.marks}/{g.max_marks}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        </section>
+      )}
     </div>
   );
 }
