@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Sentinel.meet — Secure AI video conferencing" },
+      { title: "focusmeet" },
       { name: "description", content: "Direct app-to-app video meetings with AI abuse detection and privacy-first focus monitoring. No links, no leaks, no harassment." },
-      { property: "og:title", content: "Sentinel.meet — Secure AI video conferencing" },
-      { property: "og:description", content: "No shareable links. Verified User IDs. AI moderation built in." },
+      { property: "og:title", content: "focusmeet" },
+      { property: "og:description", content: "Direct app-to-app video meetings with AI abuse detection and privacy-first focus monitoring. No links, no leaks, no harassment." },
     ],
   }),
   component: Landing,

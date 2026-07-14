@@ -78,14 +78,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "focusmeet" },
+      { name: "description", content: "Direct app-to-app video meetings with AI abuse detection and privacy-first focus monitoring. No links, no leaks, no harassment." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "focusmeet" },
+      { property: "og:description", content: "Direct app-to-app video meetings with AI abuse detection and privacy-first focus monitoring. No links, no leaks, no harassment." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "focusmeet" },
+      { name: "twitter:description", content: "Direct app-to-app video meetings with AI abuse detection and privacy-first focus monitoring. No links, no leaks, no harassment." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/3108a078-3486-4595-926e-16288ea0148b/id-preview-7c8b033e--9b3c85e3-61d0-46cd-9e3c-9f4d2ceadd9f.lovable.app-1784031169909.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/3108a078-3486-4595-926e-16288ea0148b/id-preview-7c8b033e--9b3c85e3-61d0-46cd-9e3c-9f4d2ceadd9f.lovable.app-1784031169909.png" },
     ],
     links: [
       {
