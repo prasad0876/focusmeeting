@@ -5,6 +5,7 @@
 
   [build.environment]
     NODE_VERSION = "20"
+    NITRO_PRESET = "netlify"
 
 [dev]
   command = "npm run dev -- --host 0.0.0.0"

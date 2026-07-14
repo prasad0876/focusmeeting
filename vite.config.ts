@@ -12,4 +12,14 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  vite: {
+    ssr: {
+      noExternal: [
+        "sonner",
+        "@tanstack/react-router",
+        "@tanstack/react-query",
+        /^@radix-ui/
+      ]
+    }
+  }
 });
