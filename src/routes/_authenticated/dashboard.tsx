@@ -170,6 +170,41 @@ function Dashboard() {
           </div>
         )}
       </section>
+
+      {isStudent && (
+        <section className="grid md:grid-cols-2 gap-4">
+          <Card className="p-5 bg-surface border-border/60 space-y-3">
+            <div className="flex items-center gap-2"><CalendarCheck className="size-4 text-primary" /><h3 className="font-medium">Recent attendance</h3></div>
+            {attendance.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No attendance recorded yet.</p>
+            ) : (
+              <ul className="text-sm divide-y divide-border/60">
+                {attendance.slice(0, 8).map((a) => (
+                  <li key={a.id} className="py-2 flex items-center justify-between">
+                    <span className="text-muted-foreground text-xs">{a.date} · slot {a.slot} · {a.section_name}</span>
+                    <span className={`text-xs font-mono uppercase ${a.status === "present" ? "text-success" : a.status === "late" ? "text-warning" : "text-destructive"}`}>{a.status}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+          <Card className="p-5 bg-surface border-border/60 space-y-3">
+            <div className="flex items-center gap-2"><GraduationCap className="size-4 text-primary" /><h3 className="font-medium">My marks</h3></div>
+            {grades.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No marks recorded yet.</p>
+            ) : (
+              <ul className="text-sm divide-y divide-border/60">
+                {grades.slice(0, 8).map((g) => (
+                  <li key={g.id} className="py-2 flex items-center justify-between gap-2">
+                    <span className="truncate">{g.subject} <span className="text-xs text-muted-foreground">· {g.exam_type}{g.term ? ` · ${g.term}` : ""}</span></span>
+                    <span className="text-xs font-mono tabular-nums">{g.marks}/{g.max_marks}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        </section>
+      )}
     </div>
   );
 }
