@@ -14,6 +14,7 @@ Files you should already have in the repo:
 - `.output/public` (built static assets)
 - `.output/server` (Nitro server functions)
 - `src/routes/auth.tsx` and `src/integrations/supabase/client.ts`
+- `.nvmrc` (Node version pin for Netlify)
 
 ## 1) Netlify — Create site and connect repo
 
