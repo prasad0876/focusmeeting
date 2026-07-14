@@ -1,13 +1,16 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { ShieldCheck, Eye, Brain, Sparkles, Lock, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/")({
+  beforeLoad: async () => {
+    throw redirect({ to: "/auth" });
+  },
   head: () => ({
     meta: [
-      { title: "focusmeet" },
+      { title: "class" },
       { name: "description", content: "Direct app-to-app video meetings with AI abuse detection and privacy-first focus monitoring. No links, no leaks, no harassment." },
-      { property: "og:title", content: "focusmeet" },
+      { property: "og:title", content: "class" },
       { property: "og:description", content: "Direct app-to-app video meetings with AI abuse detection and privacy-first focus monitoring. No links, no leaks, no harassment." },
     ],
   }),
@@ -25,7 +28,7 @@ function Landing() {
           <div className="size-8 rounded-md bg-primary/15 grid place-items-center glow-ring">
             <ShieldCheck className="size-4 text-primary" />
           </div>
-          <span className="font-semibold tracking-tight">Sentinel<span className="text-primary">.</span>meet</span>
+          <span className="font-semibold tracking-tight">class</span>
         </div>
         <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
           <a href="#features" className="hover:text-foreground">Features</a>

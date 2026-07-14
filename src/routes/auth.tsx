@@ -1,7 +1,6 @@
 import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +13,7 @@ export const Route = createFileRoute("/auth")({
     const { data } = await supabase.auth.getUser();
     if (data.user) throw redirect({ to: "/dashboard" });
   },
-  head: () => ({ meta: [{ title: "Sign in · Sentinel.meet" }] }),
+  head: () => ({ meta: [{ title: "Sign in · class" }] }),
   component: AuthPage,
 });
 
@@ -35,7 +34,7 @@ function AuthPage() {
           email,
           password,
           options: {
-            emailRedirectTo: window.location.origin + "/dashboard",
+            emailRedirectTo: window.location.origin + "/auth",
             data: { display_name: displayName || email.split("@")[0] },
           },
         });
@@ -55,16 +54,20 @@ function AuthPage() {
 
   const google = async () => {
     setLoading(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin + "/dashboard",
-    });
-    if (result.error) {
-      toast.error("Google sign-in failed");
-      setLoading(false);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin + "/auth",
+        },
+      });
+      if (error) throw error;
       return;
+    } catch (err: any) {
+      toast.error(err?.message ?? "Google sign-in failed");
+    } finally {
+      setLoading(false);
     }
-    if (result.redirected) return;
-    router.navigate({ to: "/dashboard", replace: true });
   };
 
   return (
@@ -74,7 +77,7 @@ function AuthPage() {
           <div className="size-9 rounded-md bg-primary/15 grid place-items-center glow-ring">
             <ShieldCheck className="size-5 text-primary" />
           </div>
-          <span className="font-semibold tracking-tight text-lg">Sentinel<span className="text-primary">.</span>meet</span>
+          <span className="font-semibold tracking-tight text-lg">class</span>
         </div>
         <div className="space-y-6 max-w-md">
           <p className="text-xs font-mono uppercase tracking-widest text-primary">Secure meeting fabric</p>
