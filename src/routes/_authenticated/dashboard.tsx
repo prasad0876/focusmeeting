@@ -19,10 +19,21 @@ type Meeting = { id: string; title: string; status: string; created_at: string; 
 
 function Dashboard() {
   const { user } = Route.useRouteContext();
+  const { isStudent } = useMyRole(user.id);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [invitationCount, setInvitationCount] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [attendance, setAttendance] = useState<any[]>([]);
+  const [grades, setGrades] = useState<any[]>([]);
+  const attFn = useServerFn(myAttendance);
+  const gradeFn = useServerFn(myGrades);
+
+  useEffect(() => {
+    if (!isStudent) return;
+    attFn().then((r: any) => setAttendance(r)).catch(() => {});
+    gradeFn().then((r: any) => setGrades(r)).catch(() => {});
+  }, [isStudent]); // eslint-disable-line
 
   useEffect(() => {
     let active = true;
