@@ -46,7 +46,7 @@ function AuthedLayout() {
             <div className="size-8 rounded-md bg-primary/15 grid place-items-center glow-ring">
               <ShieldCheck className="size-4 text-primary" />
             </div>
-            <span className="font-semibold tracking-tight">Sentinel<span className="text-primary">.</span>meet</span>
+            <span className="font-semibold tracking-tight">focus<span className="text-primary">.</span>meet</span>
           </Link>
           <nav className="hidden md:flex items-center gap-1">
             <NavLink to="/dashboard" icon={<LayoutDashboard className="size-4" />} label="Dashboard" />
