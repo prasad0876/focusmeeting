@@ -489,7 +489,7 @@ function MeetingRoom() {
   useEffect(() => {
     if (!meetingId || !user.id) return;
     const ch = supabase.channel(`share:${meetingId}`, {
-      config: { broadcast: { self: false } },
+      config: { private: true, broadcast: { self: false } },
     });
     ch.on("broadcast", { event: "request" }, ({ payload }) => {
       if (!isHost) return;
