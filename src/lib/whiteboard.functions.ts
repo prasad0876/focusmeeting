@@ -21,10 +21,12 @@ export const generateWhiteboardDiagram = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { meetingId, prompt, mode = "flow" } = data;
 
-    const { data: allowed } = await supabase.rpc("can_access_meeting", {
-      _meeting: meetingId,
-      _user: userId,
-    });
+    // RLS on meetings enforces can_access_meeting; if we can read the row, access is granted.
+    const { data: allowed } = await supabase
+      .from("meetings")
+      .select("id")
+      .eq("id", meetingId)
+      .maybeSingle();
     if (!allowed) throw new Error("Not allowed for this meeting");
 
     const apiKey = process.env.LOVABLE_API_KEY;
