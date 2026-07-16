@@ -276,7 +276,7 @@ function MeetingRoom() {
       return;
     }
     const myHandle = participants.find((p) => p.user_id === user.id)?.profile?.handle ?? "user";
-    await supabase.channel(`share:${meetingId}`).send({
+    await supabase.channel(`share:${meetingId}`, { config: { private: true } }).send({
       type: "broadcast",
       event: "request",
       payload: { userId: user.id, handle: myHandle },
