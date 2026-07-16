@@ -591,7 +591,7 @@ function MeetingRoom() {
 
   const revokeShare = async (targetId: string) => {
     if (!isHost) return;
-    await supabase.channel(`share:${meetingId}`).send({
+    await supabase.channel(`share:${meetingId}`, { config: { private: true } }).send({
       type: "broadcast",
       event: "revoke",
       payload: { userId: targetId },
