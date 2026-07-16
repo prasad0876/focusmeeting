@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiTokenRouteImport } from './routes/api/token'
 import { Route as AuthenticatedNewMeetingRouteImport } from './routes/_authenticated/new-meeting'
 import { Route as AuthenticatedInvitationsRouteImport } from './routes/_authenticated/invitations'
 import { Route as AuthenticatedGradebookRouteImport } from './routes/_authenticated/gradebook'
@@ -34,6 +35,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTokenRoute = ApiTokenRouteImport.update({
+  id: '/api/token',
+  path: '/api/token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedNewMeetingRoute = AuthenticatedNewMeetingRouteImport.update({
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/gradebook': typeof AuthenticatedGradebookRoute
   '/invitations': typeof AuthenticatedInvitationsRoute
   '/new-meeting': typeof AuthenticatedNewMeetingRoute
+  '/api/token': typeof ApiTokenRoute
   '/meeting/$id': typeof AuthenticatedMeetingIdRoute
   '/memory/$id': typeof AuthenticatedMemoryIdRoute
 }
@@ -107,6 +114,7 @@ export interface FileRoutesByTo {
   '/gradebook': typeof AuthenticatedGradebookRoute
   '/invitations': typeof AuthenticatedInvitationsRoute
   '/new-meeting': typeof AuthenticatedNewMeetingRoute
+  '/api/token': typeof ApiTokenRoute
   '/meeting/$id': typeof AuthenticatedMeetingIdRoute
   '/memory/$id': typeof AuthenticatedMemoryIdRoute
 }
@@ -122,6 +130,7 @@ export interface FileRoutesById {
   '/_authenticated/gradebook': typeof AuthenticatedGradebookRoute
   '/_authenticated/invitations': typeof AuthenticatedInvitationsRoute
   '/_authenticated/new-meeting': typeof AuthenticatedNewMeetingRoute
+  '/api/token': typeof ApiTokenRoute
   '/_authenticated/meeting/$id': typeof AuthenticatedMeetingIdRoute
   '/_authenticated/memory/$id': typeof AuthenticatedMemoryIdRoute
 }
@@ -137,6 +146,7 @@ export interface FileRouteTypes {
     | '/gradebook'
     | '/invitations'
     | '/new-meeting'
+    | '/api/token'
     | '/meeting/$id'
     | '/memory/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -150,6 +160,7 @@ export interface FileRouteTypes {
     | '/gradebook'
     | '/invitations'
     | '/new-meeting'
+    | '/api/token'
     | '/meeting/$id'
     | '/memory/$id'
   id:
@@ -164,6 +175,7 @@ export interface FileRouteTypes {
     | '/_authenticated/gradebook'
     | '/_authenticated/invitations'
     | '/_authenticated/new-meeting'
+    | '/api/token'
     | '/_authenticated/meeting/$id'
     | '/_authenticated/memory/$id'
   fileRoutesById: FileRoutesById
@@ -172,6 +184,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiTokenRoute: typeof ApiTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -195,6 +208,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/token': {
+      id: '/api/token'
+      path: '/api/token'
+      fullPath: '/api/token'
+      preLoaderRoute: typeof ApiTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/new-meeting': {
@@ -294,6 +314,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiTokenRoute: ApiTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
