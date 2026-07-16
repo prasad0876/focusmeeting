@@ -199,8 +199,13 @@ export const createSection = createServerFn({ method: "POST" })
     const admin = await isAdmin(context);
     const deo = await isDeo(context);
     if (!admin && !deo) {
-      const { data: hod } = await context.supabase.rpc("is_hod_of", { _user: context.userId, _dept: data.departmentId });
-      if (!hod) throw new Error("Forbidden");
+      const { data: dept } = await context.supabase
+        .from("departments")
+        .select("id")
+        .eq("id", data.departmentId)
+        .eq("hod_id", context.userId)
+        .maybeSingle();
+      if (!dept) throw new Error("Forbidden");
     }
     const { error } = await context.supabase.from("sections").insert({
       name: data.name.trim(),
