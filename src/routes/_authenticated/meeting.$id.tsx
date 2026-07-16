@@ -290,7 +290,7 @@ function MeetingRoom() {
       toast.error("Only the host or an admin can approve screen shares.");
       return;
     }
-    await supabase.channel(`share:${meetingId}`).send({
+    await supabase.channel(`share:${meetingId}`, { config: { private: true } }).send({
       type: "broadcast",
       event: "response",
       payload: { userId: targetUserId, approved },
