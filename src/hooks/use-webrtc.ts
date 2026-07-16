@@ -151,7 +151,7 @@ export function useWebRTC(opts: {
   useEffect(() => {
     if (!meetingId || !userId) return;
     const channel = supabase.channel(`rtc:${meetingId}`, {
-      config: { presence: { key: userId }, broadcast: { self: false } },
+      config: { private: true, presence: { key: userId }, broadcast: { self: false } },
     });
     channelRef.current = channel;
 
