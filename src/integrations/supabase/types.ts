@@ -855,14 +855,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      can_access_meeting: {
-        Args: { _meeting: string; _user: string }
-        Returns: boolean
-      }
-      faculty_of_section: {
-        Args: { _section: string; _user: string }
-        Returns: boolean
-      }
       generate_unique_handle: { Args: { _base: string }; Returns: string }
       has_role: {
         Args: {
@@ -871,25 +863,9 @@ export type Database = {
         }
         Returns: boolean
       }
-      in_department: {
-        Args: { _dept: string; _user: string }
-        Returns: boolean
-      }
-      is_admin: { Args: { _user: string }; Returns: boolean }
-      is_admin_or_deo: { Args: { _user: string }; Returns: boolean }
-      is_deo: { Args: { _user: string }; Returns: boolean }
-      is_hod_of: { Args: { _dept: string; _user: string }; Returns: boolean }
-      is_meeting_host: {
-        Args: { _meeting: string; _user: string }
-        Returns: boolean
-      }
       primary_role: {
         Args: { _user: string }
         Returns: Database["public"]["Enums"]["app_role"]
-      }
-      student_of_section: {
-        Args: { _section: string; _user: string }
-        Returns: boolean
       }
     }
     Enums: {

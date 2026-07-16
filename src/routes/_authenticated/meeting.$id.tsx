@@ -276,7 +276,7 @@ function MeetingRoom() {
       return;
     }
     const myHandle = participants.find((p) => p.user_id === user.id)?.profile?.handle ?? "user";
-    await supabase.channel(`share:${meetingId}`).send({
+    await supabase.channel(`share:${meetingId}`, { config: { private: true } }).send({
       type: "broadcast",
       event: "request",
       payload: { userId: user.id, handle: myHandle },
@@ -290,7 +290,7 @@ function MeetingRoom() {
       toast.error("Only the host or an admin can approve screen shares.");
       return;
     }
-    await supabase.channel(`share:${meetingId}`).send({
+    await supabase.channel(`share:${meetingId}`, { config: { private: true } }).send({
       type: "broadcast",
       event: "response",
       payload: { userId: targetUserId, approved },
@@ -489,7 +489,7 @@ function MeetingRoom() {
   useEffect(() => {
     if (!meetingId || !user.id) return;
     const ch = supabase.channel(`share:${meetingId}`, {
-      config: { broadcast: { self: false } },
+      config: { private: true, broadcast: { self: false } },
     });
     ch.on("broadcast", { event: "request" }, ({ payload }) => {
       if (!isHost) return;
@@ -591,7 +591,7 @@ function MeetingRoom() {
 
   const revokeShare = async (targetId: string) => {
     if (!isHost) return;
-    await supabase.channel(`share:${meetingId}`).send({
+    await supabase.channel(`share:${meetingId}`, { config: { private: true } }).send({
       type: "broadcast",
       event: "revoke",
       payload: { userId: targetId },
