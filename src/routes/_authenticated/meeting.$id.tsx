@@ -51,7 +51,13 @@ function MeetingRoom() {
         return;
       }
       if (cancelled) return;
+      if (m.status === "ended") {
+        toast.info("This meeting has ended");
+        router.navigate({ to: "/dashboard" });
+        return;
+      }
       setMeeting(m);
+      isHostRef.current = m.host_id === user.id;
 
       await supabase
         .from("meeting_participants")
