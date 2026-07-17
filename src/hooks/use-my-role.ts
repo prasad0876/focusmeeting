@@ -28,7 +28,7 @@ export function useMyRole(userId: string | undefined) {
     })();
 
     const ch = supabase
-      .channel(`role-${userId}`)
+      .channel(`role-${userId}-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "user_roles", filter: `user_id=eq.${userId}` }, async () => {
         const { data } = await supabase.rpc("primary_role", { _user: userId });
         if (active) setRole((data as AppRole) ?? null);
