@@ -27,6 +27,8 @@ function MeetingRoom() {
   const { user } = Route.useRouteContext();
   const { id: meetingId } = Route.useParams();
   const router = useRouter();
+  const endMeetingFn = useServerFn(hostEndMeeting);
+  const isHostRef = useRef(false);
 
   const [meeting, setMeeting] = useState<{ id: string; title: string; host_id: string; status: string } | null>(null);
   const [connInfo, setConnInfo] = useState<TokenResp | null>(null);
