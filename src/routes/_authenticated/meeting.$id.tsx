@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   LiveKitRoom,
@@ -13,6 +13,8 @@ import "@livekit/components-styles";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Loader2, ShieldCheck } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { hostEndMeeting } from "@/lib/meeting.functions";
 
 export const Route = createFileRoute("/_authenticated/meeting/$id")({
   head: ({ params }) => ({ meta: [{ title: `Meeting · focus.meet` }] }),
@@ -25,6 +27,8 @@ function MeetingRoom() {
   const { user } = Route.useRouteContext();
   const { id: meetingId } = Route.useParams();
   const router = useRouter();
+  const endMeetingFn = useServerFn(hostEndMeeting);
+  const isHostRef = useRef(false);
 
   const [meeting, setMeeting] = useState<{ id: string; title: string; host_id: string; status: string } | null>(null);
   const [connInfo, setConnInfo] = useState<TokenResp | null>(null);
@@ -47,7 +51,13 @@ function MeetingRoom() {
         return;
       }
       if (cancelled) return;
+      if (m.status === "ended") {
+        toast.info("This meeting has ended");
+        router.navigate({ to: "/dashboard" });
+        return;
+      }
       setMeeting(m);
+      isHostRef.current = m.host_id === user.id;
 
       await supabase
         .from("meeting_participants")
@@ -90,8 +100,24 @@ function MeetingRoom() {
       }
     })();
 
+    // Realtime: if the meeting ends, kick everyone out.
+    const statusCh = supabase
+      .channel(`meeting-status-${meetingId}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "meetings", filter: `id=eq.${meetingId}` },
+        (payload: any) => {
+          if (payload.new?.status === "ended") {
+            toast.info("The host ended this meeting");
+            router.navigate({ to: "/dashboard" });
+          }
+        },
+      )
+      .subscribe();
+
     return () => {
       cancelled = true;
+      supabase.removeChannel(statusCh);
       // Mark participant left on unmount
       supabase
         .from("meeting_participants")
@@ -99,8 +125,14 @@ function MeetingRoom() {
         .eq("meeting_id", meetingId)
         .eq("user_id", user.id)
         .then();
+      // If the host is leaving, end the meeting for everyone.
+      if (isHostRef.current) {
+        endMeetingFn({ data: { meetingId } }).catch((e) =>
+          console.error("hostEndMeeting failed", e),
+        );
+      }
     };
-  }, [meetingId, user.id, router]);
+  }, [meetingId, user.id, router, endMeetingFn]);
 
   const roomOptions = useMemo<RoomOptions>(
     () => ({
