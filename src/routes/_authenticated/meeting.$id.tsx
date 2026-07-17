@@ -195,10 +195,9 @@ function MeetingRoom() {
             </p>
           </div>
         </div>
-        <ConnectionBadge />
       </div>
 
-      <div className="flex-1 min-h-0" data-lk-theme="default">
+      <div className="flex-1 min-h-0 flex flex-col" data-lk-theme="default">
         <LiveKitRoom
           token={connInfo.token}
           serverUrl={connInfo.url}
@@ -208,10 +207,11 @@ function MeetingRoom() {
           options={roomOptions}
           onDisconnected={() => router.navigate({ to: "/dashboard" })}
           onError={(e) => toast.error(e.message)}
-          style={{ height: "100%" }}
+          style={{ height: "100%", display: "flex", flexDirection: "column", flex: 1 }}
         >
-          {/* Prebuilt UI: grid, controls (mic/cam/screen/leave), chat over data channels,
-              device selection, active speaker highlighting, participant tiles. */}
+          <div className="absolute top-2 right-4 z-50">
+            <ConnectionBadge />
+          </div>
           <VideoConference chatMessageFormatter={formatChatMessageLinks} />
           <RoomAudioRenderer />
         </LiveKitRoom>
