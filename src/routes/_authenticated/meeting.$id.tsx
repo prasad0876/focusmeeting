@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   LiveKitRoom,
@@ -13,6 +13,8 @@ import "@livekit/components-styles";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Loader2, ShieldCheck } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { hostEndMeeting } from "@/lib/meeting.functions";
 
 export const Route = createFileRoute("/_authenticated/meeting/$id")({
   head: ({ params }) => ({ meta: [{ title: `Meeting · focus.meet` }] }),
