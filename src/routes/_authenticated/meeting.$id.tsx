@@ -100,8 +100,24 @@ function MeetingRoom() {
       }
     })();
 
+    // Realtime: if the meeting ends, kick everyone out.
+    const statusCh = supabase
+      .channel(`meeting-status-${meetingId}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "meetings", filter: `id=eq.${meetingId}` },
+        (payload: any) => {
+          if (payload.new?.status === "ended") {
+            toast.info("The host ended this meeting");
+            router.navigate({ to: "/dashboard" });
+          }
+        },
+      )
+      .subscribe();
+
     return () => {
       cancelled = true;
+      supabase.removeChannel(statusCh);
       // Mark participant left on unmount
       supabase
         .from("meeting_participants")
@@ -109,8 +125,14 @@ function MeetingRoom() {
         .eq("meeting_id", meetingId)
         .eq("user_id", user.id)
         .then();
+      // If the host is leaving, end the meeting for everyone.
+      if (isHostRef.current) {
+        endMeetingFn({ data: { meetingId } }).catch((e) =>
+          console.error("hostEndMeeting failed", e),
+        );
+      }
     };
-  }, [meetingId, user.id, router]);
+  }, [meetingId, user.id, router, endMeetingFn]);
 
   const roomOptions = useMemo<RoomOptions>(
     () => ({
