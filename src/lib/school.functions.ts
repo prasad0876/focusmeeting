@@ -45,13 +45,18 @@ export const listSectionStudents = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     const { data: rows, error } = await context.supabase
       .from("student_sections")
-      .select("student_id, profiles!student_sections_student_id_fkey(id, handle, display_name, reputation, avatar_url)")
+      .select("student_id")
       .eq("section_id", data.sectionId);
     if (error) throw new Error(error.message);
-    return (rows ?? [])
-      .map((r: any) => r.profiles)
-      .filter(Boolean)
-      .sort((a: any, b: any) => a.display_name.localeCompare(b.display_name));
+    const ids = (rows ?? []).map((r: any) => r.student_id);
+    if (ids.length === 0) return [];
+    const { data: profs, error: pErr } = await context.supabase
+      .from("profiles")
+      .select("id, handle, display_name, reputation, avatar_url")
+      .in("id", ids);
+    if (pErr) throw new Error(pErr.message);
+    return (profs ?? []).sort((a: any, b: any) => a.display_name.localeCompare(b.display_name));
+
   });
 
 /* ------------ Attendance ------------ */
