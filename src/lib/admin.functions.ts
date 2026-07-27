@@ -166,7 +166,12 @@ export const createDepartment = createServerFn({ method: "POST" })
       code: data.code.trim().toUpperCase(),
       hod_id: data.hodId ?? null,
     });
-    if (error) throw new Error(error.message);
+    if (error) {
+      if (error.code === "23505" || /duplicate key/i.test(error.message)) {
+        throw new Error("A department with this name or code already exists.");
+      }
+      throw new Error(error.message);
+    }
     return { ok: true };
   });
 
