@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ShieldCheck, Ban, Trash2, StopCircle, AlertTriangle, Crown, Video, UserCheck, X, Building2, Layers, Plus } from "lucide-react";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/errors";
 import {
   adminListUsers,
   adminSetBlacklist,
@@ -99,7 +100,7 @@ function PendingPanel({ isSuperAdmin }: { isSuperAdmin: boolean }) {
   const refresh = () =>
     Promise.all([list(), listSec({ data: {} as any }).catch(() => []), listDep()]).then(([u, s, d]) => {
       setItems(u as any[]); setSections(s as any[]); setDepts(d as any[]); setLoading(false);
-    }).catch((e) => { toast.error(e.message); setLoading(false); });
+    }).catch((e) => { toast.error(friendlyError(e)); setLoading(false); });
 
   useEffect(() => { refresh(); /* eslint-disable-next-line */ }, []);
 
@@ -111,12 +112,12 @@ function PendingPanel({ isSuperAdmin }: { isSuperAdmin: boolean }) {
       await approve({ data: { userId: u.id, role: c.role, departmentId: c.deptId ?? null, sectionId: c.sectionId ?? null } });
       toast.success(`Approved @${u.handle}`);
       refresh();
-    } catch (e: any) { toast.error(e.message); }
+    } catch (e: any) { toast.error(friendlyError(e)); }
   };
   const doReject = async (u: any) => {
     if (!confirm(`Reject @${u.handle}?`)) return;
     try { await reject({ data: { userId: u.id } }); toast.success("Rejected"); refresh(); }
-    catch (e: any) { toast.error(e.message); }
+    catch (e: any) { toast.error(friendlyError(e)); }
   };
 
   if (loading) return <Card className="p-6 text-sm text-muted-foreground">Loading pending sign-ups…</Card>;
@@ -185,16 +186,16 @@ function UsersPanel({ isSuperAdmin }: { isSuperAdmin: boolean }) {
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
 
-  const refresh = () => list().then((d) => { setUsers(d as any[]); setLoading(false); }).catch((e) => { toast.error(e.message); setLoading(false); });
+  const refresh = () => list().then((d) => { setUsers(d as any[]); setLoading(false); }).catch((e) => { toast.error(friendlyError(e)); setLoading(false); });
   useEffect(() => { refresh(); /* eslint-disable-next-line */ }, []);
 
   const toggleBlacklist = async (u: any) => {
     try { await setBl({ data: { userId: u.id, blacklist: !u.is_blacklisted } }); toast.success(u.is_blacklisted ? "Unblocked" : "Blacklisted"); refresh(); }
-    catch (e: any) { toast.error(e.message); }
+    catch (e: any) { toast.error(friendlyError(e)); }
   };
   const changeRole = async (u: any, role: Role) => {
     try { await setRole({ data: { userId: u.id, role } }); toast.success(`Set @${u.handle} → ${ROLE_LABEL[role]}`); refresh(); }
-    catch (e: any) { toast.error(e.message); }
+    catch (e: any) { toast.error(friendlyError(e)); }
   };
 
   const filtered = users.filter((u) => {
@@ -257,7 +258,7 @@ function DepartmentsPanel() {
   const [users, setUsers] = useState<any[]>([]);
   const [name, setName] = useState(""); const [code, setCode] = useState(""); const [hodId, setHodId] = useState("");
 
-  const refresh = () => Promise.all([list(), listU()]).then(([d, u]) => { setDepts(d as any[]); setUsers(u as any[]); }).catch((e) => toast.error(e.message));
+  const refresh = () => Promise.all([list(), listU()]).then(([d, u]) => { setDepts(d as any[]); setUsers(u as any[]); }).catch((e) => toast.error(friendlyError(e)));
   useEffect(() => { refresh(); /* eslint-disable-next-line */ }, []);
 
   const hodCandidates = users.filter((u) => (u.roles ?? []).includes("hod"));
@@ -265,12 +266,12 @@ function DepartmentsPanel() {
   const doCreate = async () => {
     if (!name.trim() || !code.trim()) return toast.error("Name and code required");
     try { await create({ data: { name, code, hodId: hodId || null } }); toast.success("Department created"); setName(""); setCode(""); setHodId(""); refresh(); }
-    catch (e: any) { toast.error(e.message); }
+    catch (e: any) { toast.error(friendlyError(e)); }
   };
   const doDelete = async (d: any) => {
     if (!confirm(`Delete department ${d.name}? All its sections and data will be removed.`)) return;
     try { await del({ data: { departmentId: d.id } }); toast.success("Deleted"); refresh(); }
-    catch (e: any) { toast.error(e.message); }
+    catch (e: any) { toast.error(friendlyError(e)); }
   };
 
   return (
@@ -316,18 +317,18 @@ function SectionsPanel() {
   const [sections, setSections] = useState<any[]>([]);
   const [name, setName] = useState(""); const [deptId, setDeptId] = useState(""); const [slots, setSlots] = useState(7);
 
-  const refresh = () => Promise.all([list({ data: {} as any }), listD()]).then(([s, d]) => { setSections(s as any[]); setDepts(d as any[]); }).catch((e) => toast.error(e.message));
+  const refresh = () => Promise.all([list({ data: {} as any }), listD()]).then(([s, d]) => { setSections(s as any[]); setDepts(d as any[]); }).catch((e) => toast.error(friendlyError(e)));
   useEffect(() => { refresh(); /* eslint-disable-next-line */ }, []);
 
   const doCreate = async () => {
     if (!name.trim() || !deptId) return toast.error("Name and department required");
     try { await create({ data: { name, departmentId: deptId, slotCount: slots } }); toast.success("Section created"); setName(""); refresh(); }
-    catch (e: any) { toast.error(e.message); }
+    catch (e: any) { toast.error(friendlyError(e)); }
   };
   const doDelete = async (s: any) => {
     if (!confirm(`Delete section ${s.name}?`)) return;
     try { await del({ data: { sectionId: s.id } }); toast.success("Deleted"); refresh(); }
-    catch (e: any) { toast.error(e.message); }
+    catch (e: any) { toast.error(friendlyError(e)); }
   };
 
   return (
@@ -371,17 +372,17 @@ function MeetingsPanel() {
   const [meetings, setMeetings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const refresh = () => list().then((d) => { setMeetings(d as any[]); setLoading(false); }).catch((e) => { toast.error(e.message); setLoading(false); });
+  const refresh = () => list().then((d) => { setMeetings(d as any[]); setLoading(false); }).catch((e) => { toast.error(friendlyError(e)); setLoading(false); });
   useEffect(() => { refresh(); /* eslint-disable-next-line */ }, []);
 
   const endMeeting = async (m: any) => {
     try { await end({ data: { meetingId: m.id } }); toast.success("Meeting ended"); refresh(); }
-    catch (e: any) { toast.error(e.message); }
+    catch (e: any) { toast.error(friendlyError(e)); }
   };
   const deleteMeeting = async (m: any) => {
     if (!confirm(`Permanently delete "${m.title}" and all related data?`)) return;
     try { await del({ data: { meetingId: m.id } }); toast.success("Meeting deleted"); refresh(); }
-    catch (e: any) { toast.error(e.message); }
+    catch (e: any) { toast.error(friendlyError(e)); }
   };
 
   if (loading) return <Card className="p-6 text-sm text-muted-foreground">Loading meetings…</Card>;
@@ -419,7 +420,7 @@ function AbusePanel() {
   const list = useServerFn(adminListAbuse);
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  useEffect(() => { list().then((d) => { setItems(d as any[]); setLoading(false); }).catch((e) => { toast.error(e.message); setLoading(false); }); /* eslint-disable-next-line */ }, []);
+  useEffect(() => { list().then((d) => { setItems(d as any[]); setLoading(false); }).catch((e) => { toast.error(friendlyError(e)); setLoading(false); }); /* eslint-disable-next-line */ }, []);
 
   if (loading) return <Card className="p-6 text-sm text-muted-foreground">Loading incidents…</Card>;
   if (items.length === 0) return <Card className="p-6 text-sm text-muted-foreground">No abuse incidents reported.</Card>;
