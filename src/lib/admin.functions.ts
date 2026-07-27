@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { friendlyError } from "@/lib/errors";
 
 type Ctx = { supabase: any; userId: string };
 
@@ -166,12 +167,7 @@ export const createDepartment = createServerFn({ method: "POST" })
       code: data.code.trim().toUpperCase(),
       hod_id: data.hodId ?? null,
     });
-    if (error) {
-      if (error.code === "23505" || /duplicate key/i.test(error.message)) {
-        throw new Error("A department with this name or code already exists.");
-      }
-      throw new Error(error.message);
-    }
+    if (error) throw new Error(friendlyError(error));
     return { ok: true };
   });
 
@@ -217,7 +213,7 @@ export const createSection = createServerFn({ method: "POST" })
       department_id: data.departmentId,
       slot_count: data.slotCount ?? 7,
     });
-    if (error) throw new Error(error.message);
+    if (error) throw new Error(friendlyError(error));
     return { ok: true };
   });
 
@@ -227,7 +223,7 @@ export const deleteSection = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdminOrDeo(context);
     const { error } = await context.supabase.from("sections").delete().eq("id", data.sectionId);
-    if (error) throw new Error(error.message);
+    if (error) throw new Error(friendlyError(error));
     return { ok: true };
   });
 
@@ -236,12 +232,19 @@ export const assignToSection = createServerFn({ method: "POST" })
   .inputValidator((d: { userId: string; sectionId: string; kind: "student" | "faculty" }) => d)
   .handler(async ({ data, context }) => {
     const sb: any = context.supabase;
+    // RLS restricts writes to admin / deo / HOD-of-department / faculty-of-section.
     if (data.kind === "student") {
       const { error } = await sb.from("student_sections").insert({ student_id: data.userId, section_id: data.sectionId });
-      if (error && !error.message.includes("duplicate")) throw new Error(error.message);
+      if (error) {
+        if (/duplicate/i.test(error.message)) throw new Error("That student is already in this section.");
+        throw new Error(friendlyError(error));
+      }
     } else {
       const { error } = await sb.from("faculty_sections").insert({ faculty_id: data.userId, section_id: data.sectionId });
-      if (error && !error.message.includes("duplicate")) throw new Error(error.message);
+      if (error) {
+        if (/duplicate/i.test(error.message)) throw new Error("That faculty member is already assigned to this section.");
+        throw new Error(friendlyError(error));
+      }
     }
     return { ok: true };
   });
@@ -253,12 +256,41 @@ export const removeFromSection = createServerFn({ method: "POST" })
     const sb: any = context.supabase;
     if (data.kind === "student") {
       const { error } = await sb.from("student_sections").delete().eq("student_id", data.userId).eq("section_id", data.sectionId);
-      if (error) throw new Error(error.message);
+      if (error) throw new Error(friendlyError(error));
     } else {
       const { error } = await sb.from("faculty_sections").delete().eq("faculty_id", data.userId).eq("section_id", data.sectionId);
-      if (error) throw new Error(error.message);
+      if (error) throw new Error(friendlyError(error));
     }
     return { ok: true };
+  });
+
+/** Search users with the `student` role by handle or display name.
+ *  Available to admin, DEO, HOD, and faculty. Results are limited to 25 rows. */
+export const searchStudents = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { q: string }) => d)
+  .handler(async ({ data, context }) => {
+    const q = (data.q ?? "").trim();
+    if (q.length < 2) return [];
+    const sb: any = context.supabase;
+    // Get user_ids with student role
+    const { data: roles, error: rErr } = await sb
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "student");
+    if (rErr) throw new Error(friendlyError(rErr));
+    const ids = (roles ?? []).map((r: any) => r.user_id);
+    if (ids.length === 0) return [];
+    const like = `%${q.replace(/[%_]/g, "")}%`;
+    const { data: profs, error: pErr } = await sb
+      .from("profiles")
+      .select("id, handle, display_name, avatar_url, department_id, status")
+      .in("id", ids)
+      .or(`handle.ilike.${like},display_name.ilike.${like}`)
+      .eq("status", "active")
+      .limit(25);
+    if (pErr) throw new Error(friendlyError(pErr));
+    return profs ?? [];
   });
 
 /* ---------------- Meetings ---------------- */
