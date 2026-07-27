@@ -39,6 +39,17 @@ export const Route = createFileRoute("/api/token")({
           if (!meeting) return json({ error: "Meeting not found or access denied" }, 403);
           if (meeting.status === "ended") return json({ error: "Meeting has ended" }, 409);
 
+          // Reject users who have been removed from this meeting by host/admin/moderator.
+          const { data: participantRow } = await supabase
+            .from("meeting_participants")
+            .select("is_removed")
+            .eq("meeting_id", meetingId)
+            .eq("user_id", user.id)
+            .maybeSingle();
+          if (participantRow?.is_removed) {
+            return json({ error: "You have been removed from this meeting" }, 403);
+          }
+
           // Load display info for the identity metadata.
           const { data: profile } = await supabase
             .from("profiles")
