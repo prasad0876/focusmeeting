@@ -1,7 +1,7 @@
 import { createFileRoute, Outlet, redirect, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ShieldCheck, LayoutDashboard, Inbox, Plus, LogOut, Crown, ClipboardList, CalendarCheck, GraduationCap, Clock } from "lucide-react";
+import { ShieldCheck, LayoutDashboard, Inbox, Plus, LogOut, Crown, ClipboardList, CalendarCheck, GraduationCap, Clock, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useMyRole } from "@/hooks/use-my-role";
@@ -57,6 +57,7 @@ function AuthedLayout() {
                 <NavLink to="/assessments" icon={<ClipboardList className="size-4" />} label="Assessments" />
                 {canTeach && <NavLink to="/attendance" icon={<CalendarCheck className="size-4" />} label="Attendance" />}
                 {canTeach && <NavLink to="/gradebook" icon={<GraduationCap className="size-4" />} label="Gradebook" />}
+                {canTeach && <NavLink to="/roster" icon={<Users className="size-4" />} label="Roster" />}
                 {(isAdmin || isDeo) && <NavLink to="/admin" icon={<Crown className="size-4" />} label={isAdmin ? "Admin" : "DEO"} />}
                 {isHod && <NavLink to="/admin" icon={<Crown className="size-4" />} label="HOD" />}
               </>
