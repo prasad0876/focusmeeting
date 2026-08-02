@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ShieldCheck, Ban, Trash2, StopCircle, AlertTriangle, Crown, Video, UserCheck, X, Building2, Layers, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/errors";
+import { SecurityAuditPanel } from "@/components/SecurityAuditPanel";
 import {
   adminListUsers,
   adminSetBlacklist,
@@ -73,6 +74,7 @@ function AdminPage() {
           <TabsTrigger value="sections">Sections</TabsTrigger>
           <TabsTrigger value="meetings">Meetings</TabsTrigger>
           <TabsTrigger value="abuse">Abuse incidents</TabsTrigger>
+          <TabsTrigger value="audit">Security audit log</TabsTrigger>
         </TabsList>
         <TabsContent value="pending" className="mt-4"><PendingPanel isSuperAdmin={isSuperAdmin} /></TabsContent>
         <TabsContent value="users" className="mt-4"><UsersPanel isSuperAdmin={isSuperAdmin} /></TabsContent>
@@ -80,6 +82,7 @@ function AdminPage() {
         <TabsContent value="sections" className="mt-4"><SectionsPanel /></TabsContent>
         <TabsContent value="meetings" className="mt-4"><MeetingsPanel /></TabsContent>
         <TabsContent value="abuse" className="mt-4"><AbusePanel /></TabsContent>
+        <TabsContent value="audit" className="mt-4"><SecurityAuditPanel /></TabsContent>
       </Tabs>
     </div>
   );
