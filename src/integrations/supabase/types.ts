@@ -756,6 +756,60 @@ export type Database = {
           },
         ]
       }
+      security_audit_log: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          files_changed: string[]
+          id: string
+          internal_id: string
+          migration_notes: string | null
+          recorded_by: string | null
+          remediation: string | null
+          resolved_at: string | null
+          scanner_name: string | null
+          severity: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          files_changed?: string[]
+          id?: string
+          internal_id: string
+          migration_notes?: string | null
+          recorded_by?: string | null
+          remediation?: string | null
+          resolved_at?: string | null
+          scanner_name?: string | null
+          severity?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          files_changed?: string[]
+          id?: string
+          internal_id?: string
+          migration_notes?: string | null
+          recorded_by?: string | null
+          remediation?: string | null
+          resolved_at?: string | null
+          scanner_name?: string | null
+          severity?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       student_sections: {
         Row: {
           enrolled_at: string
