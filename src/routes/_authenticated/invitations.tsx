@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Inbox, Check, X } from "lucide-react";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/errors";
 
 export const Route = createFileRoute("/_authenticated/invitations")({
   head: () => ({ meta: [{ title: "Invitations · Sentinel.meet" }] }),
@@ -37,7 +38,7 @@ function Invitations() {
       .order("created_at", { ascending: false });
 
     if (error) {
-      toast.error(error.message);
+      toast.error(friendlyError(error));
       setLoading(false);
       return;
     }
@@ -85,7 +86,7 @@ function Invitations() {
       .update({ status, responded_at: new Date().toISOString() })
       .eq("id", row.id);
     if (error) {
-      toast.error(error.message);
+      toast.error(friendlyError(error));
       return;
     }
     if (status === "accepted" && row.meeting) {

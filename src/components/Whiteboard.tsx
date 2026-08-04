@@ -8,6 +8,7 @@ import {
   Pen, StickyNote, Square, Circle, Type, MousePointer2, Trash2, Sparkles, X, Eraser,
 } from "lucide-react";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/errors";
 
 type Element = {
   id: string;
@@ -95,7 +96,7 @@ export function Whiteboard({
       .select()
       .single();
     if (error) {
-      toast.error(error.message);
+      toast.error(friendlyError(error));
       return null;
     }
     setElements((prev) => (prev.some((e) => e.id === row.id) ? prev : [...prev, row as Element]));
@@ -181,7 +182,7 @@ export function Whiteboard({
       toast.success(`AI added ${res.count} elements`);
       setAiPrompt("");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "AI failed");
+      toast.error(friendlyError(err, "AI failed"));
     } finally {
       setAiBusy(false);
     }

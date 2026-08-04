@@ -11,6 +11,7 @@ import {
 import { ConnectionState, RoomOptions, VideoPresets } from "livekit-client";
 import "@livekit/components-styles";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/errors";
 import { Button } from "@/components/ui/button";
 import { Loader2, ShieldCheck } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
@@ -208,7 +209,7 @@ function MeetingRoom() {
           video
           options={roomOptions}
           onDisconnected={() => router.navigate({ to: "/dashboard" })}
-          onError={(e) => toast.error(e.message)}
+          onError={(e) => toast.error(friendlyError(e))}
           style={{ height: "100%", display: "flex", flexDirection: "column", flex: 1 }}
         >
           <div className="absolute top-2 right-4 z-50">

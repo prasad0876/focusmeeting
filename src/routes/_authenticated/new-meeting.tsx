@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/errors";
 import { X, UserPlus, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/new-meeting")({
@@ -82,7 +83,7 @@ function NewMeeting() {
       toast.success("Meeting created. Invitations sent.");
       router.navigate({ to: "/meeting/$id", params: { id: meeting.id } });
     } catch (err: any) {
-      toast.error(err?.message ?? "Could not create meeting");
+      toast.error(friendlyError(err, "Could not create meeting"));
     } finally {
       setCreating(false);
     }

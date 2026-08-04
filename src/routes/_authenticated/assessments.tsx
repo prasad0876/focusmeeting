@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/errors";
 import { FileText, Plus, Send, GraduationCap, ClipboardList, Clock, CheckCircle2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/assessments")({
@@ -173,7 +174,7 @@ function FacultyView({
     });
     setCreating(false);
     if (error) {
-      toast.error(error.message);
+      toast.error(friendlyError(error));
       return;
     }
     toast.success("Assessment created");
@@ -335,7 +336,7 @@ function GradeRow({
       .eq("id", submission.id);
     setSaving(false);
     if (error) {
-      toast.error(error.message);
+      toast.error(friendlyError(error));
       return;
     }
     toast.success("Graded");
@@ -444,7 +445,7 @@ function StudentAssessmentCard({
         .update({ content: content.trim(), submitted_at: new Date().toISOString() })
         .eq("id", submission.id);
       setSaving(false);
-      if (error) return toast.error(error.message);
+      if (error) return toast.error(friendlyError(error));
       toast.success("Submission updated");
     } else {
       const { error } = await supabase.from("assessment_submissions").insert({
@@ -453,7 +454,7 @@ function StudentAssessmentCard({
         content: content.trim(),
       });
       setSaving(false);
-      if (error) return toast.error(error.message);
+      if (error) return toast.error(friendlyError(error));
       toast.success("Submitted");
     }
     onChange();
