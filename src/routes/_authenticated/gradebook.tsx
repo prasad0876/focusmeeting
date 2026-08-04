@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/errors";
 import { GraduationCap, Trash2, Plus } from "lucide-react";
 import {
   myTeachingSections,
@@ -40,14 +41,14 @@ function GradebookPage() {
   const [form, setForm] = useState({ studentId: "", subject: "", examType: "internal-1", term: "", marks: "", maxMarks: "100", notes: "" });
 
   useEffect(() => {
-    secFn().then((s: any) => { setSections(s); if (s.length && !sectionId) setSectionId(s[0].id); }).catch((e: any) => toast.error(e.message));
+    secFn().then((s: any) => { setSections(s); if (s.length && !sectionId) setSectionId(s[0].id); }).catch((e: any) => toast.error(friendlyError(e)));
   }, []); // eslint-disable-line
 
   const refresh = () => {
     if (!sectionId) return;
     Promise.all([stuFn({ data: { sectionId } }), listFn({ data: { sectionId } })])
       .then(([s, g]) => { setStudents(s as any[]); setGrades(g as any[]); })
-      .catch((e: any) => toast.error(e.message));
+      .catch((e: any) => toast.error(friendlyError(e)));
   };
   useEffect(refresh, [sectionId]); // eslint-disable-line
 
@@ -73,7 +74,7 @@ function GradebookPage() {
       }});
       toast.success("Grade saved");
       setForm({ ...form, subject: "", marks: "", notes: "" });
-    } catch (e: any) { toast.error(e.message); }
+    } catch (e: any) { toast.error(friendlyError(e)); }
   };
 
   const nameOf = (uid: string) => students.find((s) => s.id === uid)?.display_name ?? uid.slice(0, 6);
@@ -136,7 +137,7 @@ function GradebookPage() {
                 <p className="text-xs text-muted-foreground">{g.subject} · {g.exam_type}{g.term ? ` · ${g.term}` : ""}</p>
               </div>
               <div className="text-sm font-mono tabular-nums">{g.marks}<span className="text-muted-foreground">/{g.max_marks}</span></div>
-              <Button size="sm" variant="ghost" onClick={async () => { if (confirm("Delete this mark?")) { try { await delFn({ data: { id: g.id } }); toast.success("Deleted"); } catch (e: any) { toast.error(e.message); } } }}><Trash2 className="size-3.5" /></Button>
+              <Button size="sm" variant="ghost" onClick={async () => { if (confirm("Delete this mark?")) { try { await delFn({ data: { id: g.id } }); toast.success("Deleted"); } catch (e: any) { toast.error(friendlyError(e)); } } }}><Trash2 className="size-3.5" /></Button>
             </div>
           ))}
         </Card>

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/errors";
 import { CalendarCheck, Check, X, Clock } from "lucide-react";
 import {
   myTeachingSections,
@@ -45,12 +46,12 @@ function AttendancePage() {
     secFn().then((s: any) => {
       setSections(s);
       if (s.length && !sectionId) setSectionId(s[0].id);
-    }).catch((e: any) => toast.error(e.message));
+    }).catch((e: any) => toast.error(friendlyError(e)));
   }, []); // eslint-disable-line
 
   useEffect(() => {
     if (!sectionId) return;
-    stuFn({ data: { sectionId } }).then((r: any) => setStudents(r)).catch((e: any) => toast.error(e.message));
+    stuFn({ data: { sectionId } }).then((r: any) => setStudents(r)).catch((e: any) => toast.error(friendlyError(e)));
   }, [sectionId]); // eslint-disable-line
 
   const refreshAtt = () => {
@@ -59,7 +60,7 @@ function AttendancePage() {
       const map: Record<string, string> = {};
       rows.filter((r: any) => r.slot === slot).forEach((r: any) => (map[r.student_id] = r.status));
       setAttendance(map);
-    }).catch((e: any) => toast.error(e.message));
+    }).catch((e: any) => toast.error(friendlyError(e)));
   };
   useEffect(refreshAtt, [sectionId, date, slot]); // eslint-disable-line
 
@@ -77,7 +78,7 @@ function AttendancePage() {
   const mark = async (studentId: string, status: "present" | "absent" | "late") => {
     setAttendance((a) => ({ ...a, [studentId]: status }));
     try { await upFn({ data: { sectionId, date, slot, studentId, status } }); }
-    catch (e: any) { toast.error(e.message); refreshAtt(); }
+    catch (e: any) { toast.error(friendlyError(e)); refreshAtt(); }
   };
   const markAll = async (status: "present" | "absent") => {
     for (const s of students) await mark(s.id, status);

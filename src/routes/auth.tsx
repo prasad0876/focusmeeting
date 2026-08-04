@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/errors";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
@@ -47,7 +48,7 @@ function AuthPage() {
       }
       router.navigate({ to: "/dashboard", replace: true });
     } catch (err: any) {
-      toast.error(err?.message ?? "Authentication failed");
+      toast.error(friendlyError(err, "Authentication failed"));
     } finally {
       setLoading(false);
     }
@@ -63,7 +64,7 @@ function AuthPage() {
       if (result.redirected) return;
       router.navigate({ to: "/dashboard", replace: true });
     } catch (err: any) {
-      toast.error(err?.message ?? "Google sign-in failed");
+      toast.error(friendlyError(err, "Google sign-in failed"));
     } finally {
       setLoading(false);
     }

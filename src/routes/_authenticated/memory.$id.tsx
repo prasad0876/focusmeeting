@@ -12,6 +12,7 @@ import {
   Wand2, ArrowLeft, CheckCircle2, Circle, BookOpenText,
 } from "lucide-react";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/errors";
 
 export const Route = createFileRoute("/_authenticated/memory/$id")({
   head: () => ({ meta: [{ title: "Meeting Memory · Sentinel.meet" }] }),
@@ -92,7 +93,7 @@ function MemoryPage() {
       toast.success("Summary generated");
       await load();
     } catch (e: any) {
-      toast.error(e?.message ?? "Failed to generate");
+      toast.error(friendlyError(e, "Failed to generate"));
     } finally {
       setGenerating(false);
     }
@@ -108,7 +109,7 @@ function MemoryPage() {
       const { answer } = await ask({ data: { meetingId, question: q } });
       setAnswer(answer);
     } catch (err: any) {
-      toast.error(err?.message ?? "Could not ask");
+      toast.error(friendlyError(err, "Could not ask"));
     } finally {
       setAsking(false);
     }
