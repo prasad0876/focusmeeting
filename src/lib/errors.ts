@@ -25,6 +25,17 @@ export function friendlyError(err: unknown, fallback = "Something went wrong. Pl
   if (/not-null|23502/i.test(msg)) return "A required field is missing.";
   if (/check constraint|23514/i.test(msg)) return "One of the values is not allowed.";
 
+  // Database guard triggers (protected columns)
+  if (/reputation|account status|department_id|profiles_guard/i.test(msg) && /not allowed|cannot|forbidden|permission|guard/i.test(msg)) {
+    return "Only an administrator can change this.";
+  }
+  if (/score|feedback|graded/i.test(msg) && /not allowed|cannot|forbidden|guard/i.test(msg)) {
+    return "Only faculty can change grades or feedback.";
+  }
+  if (/is_muted|is_removed|mp_guard|moderation/i.test(msg)) {
+    return "Only the meeting host or an admin can change this.";
+  }
+
   // Auth / permission
   if (/forbidden|only super admin|only admin|not authoriz/i.test(msg)) {
     return msg.replace(/^Error:\s*/i, "");
@@ -37,5 +48,9 @@ export function friendlyError(err: unknown, fallback = "Something went wrong. Pl
   // Network
   if (/failed to fetch|network|timeout/i.test(msg)) return "Network issue. Check your connection and try again.";
 
-  return msg && msg.length < 200 ? msg : fallback;
+  // Suppress anything that still looks internal
+  const internal = /private\.|public\.|_guard_|pg_|SQLSTATE|relation "|column "|trigger|function .*\(|at \/|\bstack\b|PGRST/i;
+  if (!msg || msg.length >= 200 || internal.test(msg)) return fallback;
+  return msg;
 }
+
