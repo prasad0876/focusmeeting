@@ -46,7 +46,8 @@ export const adminSetBlacklist = createServerFn({ method: "POST" })
   .inputValidator((d: { userId: string; blacklist: boolean }) => d)
   .handler(async ({ data, context }) => {
     await assertAdminOrDeo(context);
-    const { error } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
       .from("profiles")
       .update({ is_blacklisted: data.blacklist })
       .eq("id", data.userId);
@@ -121,7 +122,8 @@ export const adminApproveUser = createServerFn({ method: "POST" })
 
     const profUpdate: any = { status: "active" };
     if (data.departmentId) profUpdate.department_id = data.departmentId;
-    const { error: pErr } = await context.supabase.from("profiles").update(profUpdate).eq("id", data.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error: pErr } = await supabaseAdmin.from("profiles").update(profUpdate).eq("id", data.userId);
     if (pErr) throw new Error(pErr.message);
 
     if (data.sectionId) {
@@ -139,7 +141,8 @@ export const adminRejectUser = createServerFn({ method: "POST" })
   .inputValidator((d: { userId: string }) => d)
   .handler(async ({ data, context }) => {
     await assertAdminOrDeo(context);
-    const { error } = await context.supabase.from("profiles").update({ status: "rejected" }).eq("id", data.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("profiles").update({ status: "rejected" }).eq("id", data.userId);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -336,7 +339,8 @@ export const adminRemoveParticipant = createServerFn({ method: "POST" })
   .inputValidator((d: { meetingId: string; userId: string }) => d)
   .handler(async ({ data, context }) => {
     await assertAdminOrDeo(context);
-    const { error } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
       .from("meeting_participants")
       .update({ is_removed: true, left_at: new Date().toISOString() })
       .eq("meeting_id", data.meetingId)

@@ -59,6 +59,8 @@ function MeetingRoom() {
       setMeeting(m);
       isHostRef.current = m.host_id === user.id;
 
+      // Note: never send is_removed here — a removed participant must not be
+      // able to reinstate themselves by re-joining. Only host/admin can clear it.
       await supabase
         .from("meeting_participants")
         .upsert(
@@ -67,10 +69,10 @@ function MeetingRoom() {
             user_id: user.id,
             joined_at: new Date().toISOString(),
             left_at: null,
-            is_removed: false,
           },
           { onConflict: "meeting_id,user_id" },
         );
+
 
       const { data: sess } = await supabase.auth.getSession();
       const accessToken = sess.session?.access_token;

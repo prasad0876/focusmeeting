@@ -113,6 +113,8 @@ export const moderateAndSendMessage = createServerFn({ method: "POST" })
     const action = actionForSeverity(mod.severity);
 
     if (isFlagged) {
+      // Enforcement writes moderation columns the user is not allowed to set themselves.
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       await supabase.from("abuse_incidents").insert({
         meeting_id: data.meetingId,
         user_id: userId,
@@ -125,14 +127,14 @@ export const moderateAndSendMessage = createServerFn({ method: "POST" })
 
       // Apply action: temporary mute or removal
       if (mod.severity === "moderate" || mod.severity === "high") {
-        await supabase
+        await supabaseAdmin
           .from("meeting_participants")
           .update({ is_muted: true })
           .eq("meeting_id", data.meetingId)
           .eq("user_id", userId);
       }
       if (mod.severity === "severe") {
-        await supabase
+        await supabaseAdmin
           .from("meeting_participants")
           .update({ is_removed: true, left_at: new Date().toISOString() })
           .eq("meeting_id", data.meetingId)
@@ -148,7 +150,7 @@ export const moderateAndSendMessage = createServerFn({ method: "POST" })
           .eq("id", userId)
           .single();
         const next = Math.max(0, Math.min(100, (prof?.reputation ?? 100) + delta));
-        await supabase
+        await supabaseAdmin
           .from("profiles")
           .update({
             reputation: next,

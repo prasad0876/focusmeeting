@@ -112,6 +112,8 @@ export const moderateVideoFrame = createServerFn({ method: "POST" })
 
     const severityForDb = mod.severity as "low" | "moderate" | "high" | "severe";
     const action = actionForSeverity(mod.severity);
+    // Enforcement writes moderation columns the user is not allowed to set themselves.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     await supabase.from("abuse_incidents").insert({
       meeting_id: data.meetingId,
@@ -125,14 +127,14 @@ export const moderateVideoFrame = createServerFn({ method: "POST" })
     });
 
     if (mod.severity === "moderate" || mod.severity === "high") {
-      await supabase
+      await supabaseAdmin
         .from("meeting_participants")
         .update({ is_muted: true })
         .eq("meeting_id", data.meetingId)
         .eq("user_id", userId);
     }
     if (mod.severity === "severe") {
-      await supabase
+      await supabaseAdmin
         .from("meeting_participants")
         .update({ is_removed: true, left_at: new Date().toISOString() })
         .eq("meeting_id", data.meetingId)
@@ -147,7 +149,7 @@ export const moderateVideoFrame = createServerFn({ method: "POST" })
         .eq("id", userId)
         .single();
       const next = Math.max(0, Math.min(100, (prof?.reputation ?? 100) + delta));
-      await supabase
+      await supabaseAdmin
         .from("profiles")
         .update({
           reputation: next,
