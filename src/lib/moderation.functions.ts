@@ -113,6 +113,8 @@ export const moderateAndSendMessage = createServerFn({ method: "POST" })
     const action = actionForSeverity(mod.severity);
 
     if (isFlagged) {
+      // Enforcement writes moderation columns the user is not allowed to set themselves.
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       await supabase.from("abuse_incidents").insert({
         meeting_id: data.meetingId,
         user_id: userId,

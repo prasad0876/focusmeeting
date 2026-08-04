@@ -112,6 +112,8 @@ export const moderateVideoFrame = createServerFn({ method: "POST" })
 
     const severityForDb = mod.severity as "low" | "moderate" | "high" | "severe";
     const action = actionForSeverity(mod.severity);
+    // Enforcement writes moderation columns the user is not allowed to set themselves.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     await supabase.from("abuse_incidents").insert({
       meeting_id: data.meetingId,
