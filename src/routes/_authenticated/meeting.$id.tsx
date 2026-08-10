@@ -217,6 +217,8 @@ function MeetingRoom() {
           </div>
           <VideoConference chatMessageFormatter={formatChatMessageLinks} />
           <RoomAudioRenderer />
+          <AbuseWatcher meetingId={meeting.id} userId={user.id} />
+
         </LiveKitRoom>
       </div>
     </div>
