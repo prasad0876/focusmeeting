@@ -16,6 +16,8 @@ import { Button } from "@/components/ui/button";
 import { Loader2, ShieldCheck } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { hostEndMeeting } from "@/lib/meeting.functions";
+import { AbuseWatcher } from "@/components/AbuseWatcher";
+
 
 export const Route = createFileRoute("/_authenticated/meeting/$id")({
   head: ({ params }) => ({ meta: [{ title: `Meeting · focus.meet` }] }),
@@ -217,6 +219,8 @@ function MeetingRoom() {
           </div>
           <VideoConference chatMessageFormatter={formatChatMessageLinks} />
           <RoomAudioRenderer />
+          <AbuseWatcher meetingId={meeting.id} userId={user.id} />
+
         </LiveKitRoom>
       </div>
     </div>

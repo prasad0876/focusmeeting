@@ -52,7 +52,7 @@ export const transcribeMeetingChunk = createServerFn({ method: "POST" })
       return { text: "", inserted: false };
     }
 
-    if (!text || text.length < 2) return { text: "", inserted: false };
+    if (!text || text.length < 2) return { text: "", inserted: false, severity: "none" as const };
 
     // Get speaker name
     const { data: prof } = await supabase
@@ -71,8 +71,27 @@ export const transcribeMeetingChunk = createServerFn({ method: "POST" })
     });
     if (insErr) console.error("[stt] insert", insErr);
 
-    return { text, inserted: !insErr };
+    // Spoken-abuse detection on the same transcript.
+    let severity: "none" | "low" | "moderate" | "high" | "severe" = "none";
+    try {
+      const { classifyAbuse, enforceAbuse } = await import("@/lib/moderation.server");
+      const mod = await classifyAbuse(text);
+      severity = mod.severity;
+      await enforceAbuse({
+        supabase,
+        userId,
+        meetingId: data.meetingId,
+        content: text,
+        mod,
+        source: "speech",
+      });
+    } catch (err) {
+      console.error("[stt] moderation", err);
+    }
+
+    return { text, inserted: !insErr, severity };
   });
+
 
 // ---------- Generate post-meeting summary + action items ----------
 const SummaryInput = z.object({ meetingId: z.string().uuid() });
