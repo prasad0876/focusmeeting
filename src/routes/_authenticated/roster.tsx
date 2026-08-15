@@ -51,7 +51,8 @@ function RosterPage() {
     secFn()
       .then((s: any[]) => {
         setSections(s);
-        if (s.length && !sectionId) setSectionId(s[0].id);
+        const preferred = sectionParam && s.some((x) => x.id === sectionParam) ? sectionParam : s[0]?.id;
+        if (preferred && !sectionId) setSectionId(preferred);
       })
       .catch((e) => toast.error(friendlyError(e)));
     // eslint-disable-next-line
