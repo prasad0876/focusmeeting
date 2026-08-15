@@ -358,6 +358,9 @@ function SectionsPanel() {
               <div className="font-medium">{s.name}</div>
               <p className="text-xs text-muted-foreground">{depts.find((d) => d.id === s.department_id)?.name ?? "—"} · {s.slot_count} slots/day</p>
             </div>
+            <Button asChild size="sm" variant="secondary">
+              <Link to="/roster" search={{ section: s.id }}>Students</Link>
+            </Button>
             <Button size="sm" variant="destructive" onClick={() => doDelete(s)}><Trash2 className="size-3.5" /></Button>
           </div>
         ))}
