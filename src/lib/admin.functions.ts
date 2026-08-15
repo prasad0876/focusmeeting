@@ -281,8 +281,12 @@ export const searchStudents = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     const q = (data.q ?? "").trim();
     if (q.length < 2) return [];
-    const sb: any = context.supabase;
-    // Get user_ids with student role
+    // Caller must be staff. Verified through their own role, then we read the
+    // student directory with the privileged client (RLS hides students that are
+    // not yet enrolled in the caller's sections, which is exactly who we search).
+    await assertStaff(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const sb: any = supabaseAdmin;
     const { data: roles, error: rErr } = await sb
       .from("user_roles")
       .select("user_id")
