@@ -19,6 +19,9 @@ export const Route = createFileRoute("/_authenticated/roster")({
       { name: "description", content: "Manage students enrolled in your sections." },
     ],
   }),
+  validateSearch: (s: Record<string, unknown>) => ({
+    section: typeof s.section === "string" ? s.section : undefined,
+  }),
   beforeLoad: async ({ context }) => {
     const uid = (context as any).user.id;
     const { data: r } = await supabase.rpc("primary_role", { _user: uid });
