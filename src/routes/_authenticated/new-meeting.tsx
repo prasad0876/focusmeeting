@@ -1,5 +1,16 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { myTeachingSections } from "@/lib/school.functions";
+import { createSectionMeeting } from "@/lib/meeting.functions";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +37,13 @@ function NewMeeting() {
   const [handle, setHandle] = useState("");
   const [searching, setSearching] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [sectionId, setSectionId] = useState<string>("");
+
+  const sectionsQ = useQuery({
+    queryKey: ["my-teaching-sections"],
+    queryFn: () => myTeachingSections(),
+  });
+  const startSectionMeeting = useServerFn(createSectionMeeting);
 
   const addInvitee = async () => {
     const cleaned = handle.replace(/^@/, "").trim().toLowerCase();
@@ -58,6 +76,16 @@ function NewMeeting() {
     if (!title.trim()) return;
     setCreating(true);
     try {
+      if (sectionId) {
+        const res = await startSectionMeeting({
+          data: { title: title.trim(), description: description.trim() || null, sectionId },
+        });
+        toast.success(
+          `Meeting created for ${res.sectionName}. ${res.invited} student${res.invited === 1 ? "" : "s"} invited.`,
+        );
+        router.navigate({ to: "/meeting/$id", params: { id: res.meetingId } });
+        return;
+      }
       const { data: meeting, error } = await supabase
         .from("meetings")
         .insert({
@@ -121,6 +149,37 @@ function NewMeeting() {
             />
           </div>
         </Card>
+
+        {(sectionsQ.data?.length ?? 0) > 0 && (
+          <Card className="p-6 bg-surface border-border/60 space-y-3">
+            <div>
+              <Label>Invite a whole section (optional)</Label>
+              <p className="text-xs text-muted-foreground mt-1">
+                Every student enrolled in the selected section is invited automatically.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Select value={sectionId} onValueChange={setSectionId}>
+                <SelectTrigger className="flex-1">
+                  <SelectValue placeholder="No section — invite individually" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(sectionsQ.data ?? []).map((s: any) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.name}
+                      {s.department_name ? ` · ${s.department_name}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {sectionId && (
+                <Button type="button" variant="ghost" onClick={() => setSectionId("")}>
+                  Clear
+                </Button>
+              )}
+            </div>
+          </Card>
+        )}
 
         <Card className="p-6 bg-surface border-border/60 space-y-4">
           <div>
