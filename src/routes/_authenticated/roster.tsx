@@ -31,6 +31,7 @@ export const Route = createFileRoute("/_authenticated/roster")({
 });
 
 function RosterPage() {
+  const { section: sectionParam } = Route.useSearch();
   const secFn = useServerFn(myTeachingSections);
   const stuFn = useServerFn(listSectionStudents);
   const searchFn = useServerFn(searchStudents);
