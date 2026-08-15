@@ -19,6 +19,9 @@ export const Route = createFileRoute("/_authenticated/roster")({
       { name: "description", content: "Manage students enrolled in your sections." },
     ],
   }),
+  validateSearch: (s: Record<string, unknown>) => ({
+    section: typeof s.section === "string" ? s.section : undefined,
+  }),
   beforeLoad: async ({ context }) => {
     const uid = (context as any).user.id;
     const { data: r } = await supabase.rpc("primary_role", { _user: uid });
@@ -28,6 +31,7 @@ export const Route = createFileRoute("/_authenticated/roster")({
 });
 
 function RosterPage() {
+  const { section: sectionParam } = Route.useSearch();
   const secFn = useServerFn(myTeachingSections);
   const stuFn = useServerFn(listSectionStudents);
   const searchFn = useServerFn(searchStudents);
@@ -47,7 +51,8 @@ function RosterPage() {
     secFn()
       .then((s: any[]) => {
         setSections(s);
-        if (s.length && !sectionId) setSectionId(s[0].id);
+        const preferred = sectionParam && s.some((x) => x.id === sectionParam) ? sectionParam : s[0]?.id;
+        if (preferred && !sectionId) setSectionId(preferred);
       })
       .catch((e) => toast.error(friendlyError(e)));
     // eslint-disable-next-line
