@@ -43,20 +43,32 @@ export const listSectionStudents = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { sectionId: string }) => d)
   .handler(async ({ data, context }) => {
-    const { data: rows, error } = await context.supabase
+    // Authorize: the section must be visible to the caller under RLS
+    // (admin/DEO, HOD of its department, faculty of the section, or enrolled student).
+    const { data: sec, error: secErr } = await context.supabase
+      .from("sections")
+      .select("id")
+      .eq("id", data.sectionId)
+      .maybeSingle();
+    if (secErr) throw new Error(secErr.message);
+    if (!sec) throw new Error("You don't have access to this section.");
+
+    // Roster names are then read with the privileged client so partial profile
+    // visibility never renders an empty roster for an authorized manager.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows, error } = await supabaseAdmin
       .from("student_sections")
       .select("student_id")
       .eq("section_id", data.sectionId);
     if (error) throw new Error(error.message);
     const ids = (rows ?? []).map((r: any) => r.student_id);
     if (ids.length === 0) return [];
-    const { data: profs, error: pErr } = await context.supabase
+    const { data: profs, error: pErr } = await supabaseAdmin
       .from("profiles")
       .select("id, handle, display_name, reputation, avatar_url")
       .in("id", ids);
     if (pErr) throw new Error(pErr.message);
     return (profs ?? []).sort((a: any, b: any) => a.display_name.localeCompare(b.display_name));
-
   });
 
 /* ------------ Attendance ------------ */
