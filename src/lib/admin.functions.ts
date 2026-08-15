@@ -18,6 +18,12 @@ async function assertAdmin(ctx: Ctx) {
 async function assertAdminOrDeo(ctx: Ctx) {
   if (!(await isAdmin(ctx)) && !(await isDeo(ctx))) throw new Error("Forbidden: admin or DEO only");
 }
+/** Staff = admin, DEO, HOD or faculty. Verified server-side via own-role read (RLS-safe). */
+async function assertStaff(ctx: Ctx) {
+  const { data } = await ctx.supabase.rpc("primary_role", { _user: ctx.userId });
+  if (!data || data === "student") throw new Error("Forbidden: staff only");
+  return data as string;
+}
 
 /* ---------------- Users ---------------- */
 
