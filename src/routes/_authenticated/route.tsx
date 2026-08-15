@@ -1,9 +1,10 @@
 import { createFileRoute, Outlet, redirect, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ShieldCheck, LayoutDashboard, Inbox, Plus, LogOut, Crown, ClipboardList, CalendarCheck, GraduationCap, Clock, Users } from "lucide-react";
+import { ShieldCheck, LayoutDashboard, Inbox, Plus, LogOut, Crown, ClipboardList, CalendarCheck, GraduationCap, Clock, Users, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useMyRole } from "@/hooks/use-my-role";
 
 export const Route = createFileRoute("/_authenticated")({
