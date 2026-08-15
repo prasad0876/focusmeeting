@@ -37,7 +37,10 @@ export const adminListUsers = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false })
       .limit(500);
     if (error) throw new Error(error.message);
-    const { data: roles } = await context.supabase.from("user_roles").select("user_id, role");
+    // Roles are readable directly only by admins; DEO is authorized above, so read
+    // the role map with the privileged client after that check.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: roles } = await supabaseAdmin.from("user_roles").select("user_id, role");
     const roleMap = new Map<string, string[]>();
     (roles ?? []).forEach((r: any) => {
       const arr = roleMap.get(r.user_id) ?? [];
