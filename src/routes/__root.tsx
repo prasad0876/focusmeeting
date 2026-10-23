@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
+import { advertisingPolicy } from "@/lib/advertising-policy";
 
 function NotFoundComponent() {
   return (
@@ -88,20 +89,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:site", content: "@Lovable" },
       { name: "twitter:title", content: "focusmeet" },
       { name: "twitter:description", content: "Direct app-to-app video meetings with AI abuse detection and privacy-first focus monitoring. No links, no leaks, no harassment." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/3108a078-3486-4595-926e-16288ea0148b/id-preview-7c8b033e--9b3c85e3-61d0-46cd-9e3c-9f4d2ceadd9f.lovable.app-1784031169909.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/3108a078-3486-4595-926e-16288ea0148b/id-preview-7c8b033e--9b3c85e3-61d0-46cd-9e3c-9f4d2ceadd9f.lovable.app-1784031169909.png" },
+      { name: "google-adsense-account", content: advertisingPolicy.publisherId },
     ],
     links: [
       {
         rel: "stylesheet",
         href: appCss,
-      },
-    ],
-    scripts: [
-      {
-        async: true,
-        src: "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3061308186729716",
-        crossOrigin: "anonymous",
       },
     ],
   }),
