@@ -1,3 +1,4 @@
+import { pageHead } from "@/lib/page-head";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +9,7 @@ import { toast } from "sonner";
 import { friendlyError } from "@/lib/errors";
 
 export const Route = createFileRoute("/_authenticated/invitations")({
-  head: () => ({ meta: [{ title: "Invitations · Sentinel.meet" }] }),
+  head: () => pageHead("Invitations", "View and respond to your private meeting invitations."),
   component: Invitations,
 });
 

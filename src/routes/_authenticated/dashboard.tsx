@@ -1,3 +1,4 @@
+import { pageHead } from "@/lib/page-head";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -10,7 +11,7 @@ import { myAttendance, myGrades } from "@/lib/school.functions";
 import { useMyRole } from "@/hooks/use-my-role";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard · Sentinel.meet" }] }),
+  head: () => pageHead("Dashboard", "View your meetings and institutional classroom activity."),
   component: Dashboard,
 });
 

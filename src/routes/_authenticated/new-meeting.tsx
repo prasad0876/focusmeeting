@@ -1,3 +1,4 @@
+import { pageHead } from "@/lib/page-head";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -22,7 +23,7 @@ import { friendlyError } from "@/lib/errors";
 import { X, UserPlus, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/new-meeting")({
-  head: () => ({ meta: [{ title: "New meeting · Sentinel.meet" }] }),
+  head: () => pageHead("New meeting", "Create a private meeting and invite participants from a section."),
   component: NewMeeting,
 });
 
