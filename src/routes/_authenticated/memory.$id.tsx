@@ -1,3 +1,4 @@
+import { pageHead } from "@/lib/page-head";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,7 +16,7 @@ import { toast } from "sonner";
 import { friendlyError } from "@/lib/errors";
 
 export const Route = createFileRoute("/_authenticated/memory/$id")({
-  head: () => ({ meta: [{ title: "Meeting Memory · Sentinel.meet" }] }),
+  head: () => pageHead("Meeting memory", "Review an authorised meeting transcript, summary, and action items."),
   component: MemoryPage,
 });
 

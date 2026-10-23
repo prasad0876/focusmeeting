@@ -1,3 +1,4 @@
+import { pageHead } from "@/lib/page-head";
 import { createFileRoute, redirect, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -35,7 +36,7 @@ type Role = "admin" | "deo" | "hod" | "faculty" | "student";
 const ROLE_LABEL: Record<Role, string> = { admin: "Admin", deo: "DEO", hod: "HOD", faculty: "Faculty", student: "Student" };
 
 export const Route = createFileRoute("/_authenticated/admin")({
-  head: () => ({ meta: [{ title: "Admin console · Sentinel.meet" }] }),
+  head: () => pageHead("Admin console", "Review users, sections, meetings, and institutional access."),
   beforeLoad: async ({ context }) => {
     const uid = (context as any).user.id;
     const [{ data: a }, { data: d }] = await Promise.all([

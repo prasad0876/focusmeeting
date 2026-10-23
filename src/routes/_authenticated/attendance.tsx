@@ -1,3 +1,4 @@
+import { pageHead } from "@/lib/page-head";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -17,7 +18,7 @@ import {
 } from "@/lib/school.functions";
 
 export const Route = createFileRoute("/_authenticated/attendance")({
-  head: () => ({ meta: [{ title: "Attendance · Sentinel.meet" }] }),
+  head: () => pageHead("Attendance", "Review and manage section attendance records."),
   beforeLoad: async ({ context }) => {
     const uid = (context as any).user.id;
     const { data: r } = await supabase.rpc("primary_role", { _user: uid });

@@ -1,3 +1,4 @@
+import { pageHead } from "@/lib/page-head";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -13,12 +14,7 @@ import { searchStudents, assignToSection, removeFromSection } from "@/lib/admin.
 import { friendlyError } from "@/lib/errors";
 
 export const Route = createFileRoute("/_authenticated/roster")({
-  head: () => ({
-    meta: [
-      { title: "Section roster · focus.meet" },
-      { name: "description", content: "Manage students enrolled in your sections." },
-    ],
-  }),
+  head: () => pageHead("Section roster", "View and manage students enrolled in authorised sections."),
   validateSearch: (s: Record<string, unknown>) => ({
     section: typeof s.section === "string" ? s.section : undefined,
   }),

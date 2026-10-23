@@ -1,3 +1,4 @@
+import { pageHead } from "@/lib/page-head";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -18,7 +19,7 @@ import {
 } from "@/lib/school.functions";
 
 export const Route = createFileRoute("/_authenticated/gradebook")({
-  head: () => ({ meta: [{ title: "Gradebook · Sentinel.meet" }] }),
+  head: () => pageHead("Gradebook", "Review and manage student grades with authorised access."),
   beforeLoad: async ({ context }) => {
     const uid = (context as any).user.id;
     const { data: r } = await supabase.rpc("primary_role", { _user: uid });

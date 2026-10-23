@@ -1,3 +1,4 @@
+import { pageHead } from "@/lib/page-head";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +14,7 @@ import { friendlyError } from "@/lib/errors";
 import { FileText, Plus, Send, GraduationCap, ClipboardList, Clock, CheckCircle2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/assessments")({
-  head: () => ({ meta: [{ title: "Assessments · Sentinel.meet" }] }),
+  head: () => pageHead("Assessments", "View and manage institutional assessments and submissions."),
   component: AssessmentsPage,
 });
 

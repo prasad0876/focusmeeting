@@ -17,10 +17,12 @@ import { Loader2, ShieldCheck } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { hostEndMeeting } from "@/lib/meeting.functions";
 import { AbuseWatcher } from "@/components/AbuseWatcher";
+import { MeetingPrivacyNotice } from "@/components/MeetingPrivacyNotice";
+import { pageHead } from "@/lib/page-head";
 
 
 export const Route = createFileRoute("/_authenticated/meeting/$id")({
-  head: ({ params }) => ({ meta: [{ title: `Meeting · focus.meet` }] }),
+  head: () => pageHead("Meeting", "Join an authorised private video meeting with chat and microphone moderation."),
   component: MeetingRoom,
 });
 
@@ -32,6 +34,7 @@ function MeetingRoom() {
   const router = useRouter();
   const endMeetingFn = useServerFn(hostEndMeeting);
   const isHostRef = useRef(false);
+  const [acknowledgedMeeting, setAcknowledgedMeeting] = useState<string | null>(null);
 
   const [meeting, setMeeting] = useState<{ id: string; title: string; host_id: string; status: string } | null>(null);
   const [connInfo, setConnInfo] = useState<TokenResp | null>(null);
@@ -40,6 +43,7 @@ function MeetingRoom() {
 
   // Bootstrap: fetch meeting, upsert participant, request LiveKit token.
   useEffect(() => {
+    if (acknowledgedMeeting !== meetingId) return;
     let cancelled = false;
     (async () => {
       setLoading(true);
@@ -137,7 +141,7 @@ function MeetingRoom() {
         );
       }
     };
-  }, [meetingId, user.id, router, endMeetingFn]);
+  }, [meetingId, user.id, router, endMeetingFn, acknowledgedMeeting]);
 
   const roomOptions = useMemo<RoomOptions>(
     () => ({
@@ -159,6 +163,10 @@ function MeetingRoom() {
     }),
     [],
   );
+
+  if (acknowledgedMeeting !== meetingId) {
+    return <MeetingPrivacyNotice onAccept={() => setAcknowledgedMeeting(meetingId)} />;
+  }
 
   if (loading) {
     return (
@@ -202,6 +210,7 @@ function MeetingRoom() {
         </div>
       </div>
 
+      <p className="px-4 py-2 text-xs text-muted-foreground border-b border-border">AI transcription and chat moderation active · Audio chunks and transcripts are processed and saved. <Link to="/privacy" target="_blank" className="text-primary underline">Privacy</Link></p>
       <div className="flex-1 min-h-0 flex flex-col" data-lk-theme="default">
         <LiveKitRoom
           token={connInfo.token}

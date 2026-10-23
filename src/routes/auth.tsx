@@ -1,4 +1,6 @@
 import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
+import { PublicLinks } from "@/components/PublicPage";
+import { pageHead } from "@/lib/page-head";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -15,7 +17,7 @@ export const Route = createFileRoute("/auth")({
     const { data } = await supabase.auth.getUser();
     if (data.user) throw redirect({ to: "/dashboard" });
   },
-  head: () => ({ meta: [{ title: "Sign in · class" }] }),
+  head: () => pageHead("Sign in", "Sign in to your institutional account to access private meetings and classroom tools."),
   component: AuthPage,
 });
 
@@ -83,7 +85,7 @@ function AuthPage() {
         <div className="space-y-6 max-w-md">
           <p className="text-xs font-mono uppercase tracking-widest text-primary">Secure meeting fabric</p>
           <h1 className="text-4xl font-semibold leading-tight">
-            Meetings that <span className="text-gradient">no one</span> can crash, leak or hijack.
+            Private meetings.<br /><span className="text-primary">Safer conversations.</span>
           </h1>
           <ul className="space-y-3 text-sm text-muted-foreground">
             <li className="flex gap-3"><span className="text-primary">→</span> Direct app-to-app invitations. No shareable links.</li>
@@ -142,6 +144,10 @@ function AuthPage() {
               {mode === "signin" ? "Create account" : "Sign in"}
             </button>
           </p>
+          <div className="border-t border-border pt-5 space-y-4">
+            <p className="text-xs leading-relaxed text-muted-foreground">Meeting chat and microphone audio may be processed by AI for moderation and transcripts. Review our privacy and safety information before participating. Advertising is currently disabled.</p>
+            <PublicLinks />
+          </div>
         </div>
       </div>
     </div>
