@@ -6,6 +6,7 @@
 - [x] Finish public-site readiness review and correct privacy/crawl gaps; verify preview and published differences.
 - [x] Reflect adults-only audience and 30-day meeting / 90-day incident retention targets without claiming automatic deletion; test signed-in age acknowledgement and decline.
 - [x] Set the public privacy contact to l44539994@gmail.com on the Privacy page.
+- [x] Recheck live public pages and ads.txt: homepage, Privacy, meeting guide and safety return 200; publisher record is correct; no advertising scripts or requests observed.
 - [ ] Automatic expiry: owner approval of deletion timing, academic-record schedule and incident-preservation exceptions required before implementing destructive cleanup; provider/backup retention remains unverified.
 - [x] Keep advertising disabled; certified consent integration and audience safeguards are prerequisites for any later ad enablement.
-- [ ] Publish and recheck the live site after the working privacy contact is supplied; current live version still loads the old ad script.
+- [ ] Publish the latest privacy contact update and recheck the live email link; live Privacy still says no contact has been supplied. Ads are disabled in the current live version.
