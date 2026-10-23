@@ -1,6 +1,7 @@
 # AdSense readiness
 - [x] Expand the meeting guide with classroom examples, detailed troubleshooting and safe real product screenshots.
-- [ ] Publish the prepared changes after a current security check, then verify live content, privacy contact, ads.txt and disabled advertising.
+- [x] Request publication of the prepared changes after basic security checks; tests and preview checks pass, including screenshots and ad-free signed-in record pages. Deep code analysis remains unverified.
+- [ ] Confirm deployment completion: the post-request live check still shows the previous guide and no privacy email; public pages and ads.txt return 200 with no advertising requests.
 - [ ] Request AdSense review after live verification; requires the owner's AdSense account action if no authorised review control is available.
 - [x] Add original public information and privacy/safety pages with navigation.
 - [x] Replace automatic ad loading with non-tracking ownership verification and add ads.txt.
@@ -12,4 +13,3 @@
 - [x] Recheck live public pages and ads.txt: homepage, Privacy, meeting guide and safety return 200; publisher record is correct; no advertising scripts or requests observed.
 - [ ] Automatic expiry: owner approval of deletion timing, academic-record schedule and incident-preservation exceptions required before implementing destructive cleanup; provider/backup retention remains unverified.
 - [x] Keep advertising disabled; certified consent integration and audience safeguards are prerequisites for any later ad enablement.
-- [ ] Publish the latest privacy contact update and recheck the live email link; live Privacy still says no contact has been supplied. Ads are disabled in the current live version.
