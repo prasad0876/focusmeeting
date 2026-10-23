@@ -17,8 +17,10 @@ describe("Owner-selected privacy rules", () => {
   it("sets a 90-day target for moderation incidents", () => {
     assert.equal(privacyPolicy.moderationRetentionDays, 90);
   });
-  it("does not promise automatic deletion or invent a contact email", () => {
+  it("does not promise automatic deletion", () => {
     assert.equal(privacyPolicy.automaticDeletionEnabled, false);
-    assert.equal(privacyPolicy.contactEmail, null);
+  });
+  it("uses the owner's public privacy contact", () => {
+    assert.equal(privacyPolicy.contactEmail, "l44539994@gmail.com");
   });
 });
