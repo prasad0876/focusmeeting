@@ -1,14 +1,15 @@
-import { describe, expect, test } from "bun:test";
+import { describe, it as test } from "node:test";
+import { strict as assert } from "node:assert";
 import { advertisingPolicy } from "./advertising-policy";
 describe("AdSense privacy safeguards", () => {
   test("ads remain disabled without consent integration", () => {
-    expect(advertisingPolicy.advertisingEnabled).toBe(false);
-    expect(advertisingPolicy.personalisedAdvertisingEnabled).toBe(false);
+    assert.equal(advertisingPolicy.advertisingEnabled, false);
+    assert.equal(advertisingPolicy.personalisedAdvertisingEnabled, false);
   });
   test("child-directed advertising is not enabled", () => {
-    expect(advertisingPolicy.childDirectedAdvertisingEnabled).toBe(false);
+    assert.equal(advertisingPolicy.childDirectedAdvertisingEnabled, false);
   });
   test("verification uses the supplied publisher ID", () => {
-    expect(advertisingPolicy.publisherId).toBe("ca-pub-3061308186729716");
+    assert.equal(advertisingPolicy.publisherId, "ca-pub-3061308186729716");
   });
 });

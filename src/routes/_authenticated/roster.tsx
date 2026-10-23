@@ -15,11 +15,6 @@ import { friendlyError } from "@/lib/errors";
 
 export const Route = createFileRoute("/_authenticated/roster")({
   head: () => pageHead("Section roster", "View and manage students enrolled in authorised sections."),
-    meta: [
-      { title: "Section roster · focus.meet" },
-      { name: "description", content: "Manage students enrolled in your sections." },
-    ],
-  }),
   validateSearch: (s: Record<string, unknown>) => ({
     section: typeof s.section === "string" ? s.section : undefined,
   }),
