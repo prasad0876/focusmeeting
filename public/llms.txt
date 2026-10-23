@@ -1,6 +1,9 @@
-# Sentinel.meet
+# focus.meet
 
-> AI-powered secure video conferencing. Direct app-to-app invitations, verified User IDs, real-time AI abuse detection, and privacy-first focus monitoring.
+> Institutional video meetings for participants aged 18 and older, with account-based invitations and AI-assisted moderation. Advertising is disabled. Audio transcription and moderation involve cloud processing; AI may make mistakes.
 
 ## Pages
-- [Home](/): Product overview and core features
+- [Home](https://focusmeeting.lovable.app/): Product overview
+- [Meeting guide](https://focusmeeting.lovable.app/meeting-guide): Original institutional meeting guidance
+- [Privacy](https://focusmeeting.lovable.app/privacy): Processing, planned retention limits and contact information
+- [Safety](https://focusmeeting.lovable.app/safety): Conduct and reporting
