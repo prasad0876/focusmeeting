@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as MeetingGuideRouteImport } from './routes/meeting-guide'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SafetyRouteImport } from './routes/safety'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
@@ -38,6 +39,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MeetingGuideRoute = MeetingGuideRouteImport.update({
+  id: '/meeting-guide',
+  path: '/meeting-guide',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -111,6 +117,7 @@ const AuthenticatedMemoryIdRoute = AuthenticatedMemoryIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/meeting-guide': typeof MeetingGuideRoute
   '/privacy': typeof PrivacyRoute
   '/safety': typeof SafetyRoute
   '/admin': typeof AuthenticatedAdminRoute
@@ -128,6 +135,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/meeting-guide': typeof MeetingGuideRoute
   '/privacy': typeof PrivacyRoute
   '/safety': typeof SafetyRoute
   '/admin': typeof AuthenticatedAdminRoute
@@ -147,6 +155,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/meeting-guide': typeof MeetingGuideRoute
   '/privacy': typeof PrivacyRoute
   '/safety': typeof SafetyRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
@@ -166,6 +175,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/meeting-guide'
     | '/privacy'
     | '/safety'
     | '/admin'
@@ -183,6 +193,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/meeting-guide'
     | '/privacy'
     | '/safety'
     | '/admin'
@@ -201,6 +212,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/meeting-guide'
     | '/privacy'
     | '/safety'
     | '/_authenticated/admin'
@@ -220,6 +232,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  MeetingGuideRoute: typeof MeetingGuideRoute
   PrivacyRoute: typeof PrivacyRoute
   SafetyRoute: typeof SafetyRoute
   ApiTokenRoute: typeof ApiTokenRoute
@@ -246,6 +259,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/meeting-guide': {
+      id: '/meeting-guide'
+      path: '/meeting-guide'
+      fullPath: '/meeting-guide'
+      preLoaderRoute: typeof MeetingGuideRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -375,6 +395,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  MeetingGuideRoute: MeetingGuideRoute,
   PrivacyRoute: PrivacyRoute,
   SafetyRoute: SafetyRoute,
   ApiTokenRoute: ApiTokenRoute,

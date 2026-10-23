@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 export function PublicLinks() {
   return <nav aria-label="Information and policies" className="flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm text-muted-foreground">
     <Link to="/" className="hover:text-primary">About focus.meet</Link>
+    <Link to="/meeting-guide" className="hover:text-primary">Meeting guide</Link>
     <Link to="/privacy" className="hover:text-primary">Privacy</Link>
     <Link to="/safety" className="hover:text-primary">Safety & acceptable use</Link>
   </nav>;

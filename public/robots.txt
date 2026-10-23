@@ -5,3 +5,11 @@ Disallow: /dashboard
 Disallow: /invitations
 Disallow: /new-meeting
 Disallow: /meeting/
+Disallow: /memory/
+Disallow: /admin
+Disallow: /assessments
+Disallow: /attendance
+Disallow: /gradebook
+Disallow: /roster
+Disallow: /api/
+Sitemap: https://focusmeeting.lovable.app/sitemap.xml

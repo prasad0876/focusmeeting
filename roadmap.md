@@ -3,4 +3,9 @@
 - [x] Replace automatic ad loading with non-tracking ownership verification and add ads.txt.
 - [x] Show a meeting processing notice before camera/microphone connection.
 - [x] Verify public navigation, advertising isolation, and the signed-in meeting notice/decline path (no media token before acknowledgement).
-- [ ] Owner confirmation: privacy contact, retention schedule, and student age range; certified CMP required before personalised advertising is enabled in applicable regions.
+- [x] Finish public-site readiness review and correct privacy/crawl gaps; verify preview and published differences.
+- [x] Reflect adults-only audience and 30-day meeting / 90-day incident retention targets without claiming automatic deletion; test signed-in age acknowledgement and decline.
+- [ ] Privacy contact: owner supplied “Secure connect”; usable public email or contact channel still required.
+- [ ] Automatic expiry: owner approval of deletion timing, academic-record schedule and incident-preservation exceptions required before implementing destructive cleanup; provider/backup retention remains unverified.
+- [x] Keep advertising disabled; certified consent integration and audience safeguards are prerequisites for any later ad enablement.
+- [ ] Publish and recheck the live site after the working privacy contact is supplied; current live version still loads the old ad script.
