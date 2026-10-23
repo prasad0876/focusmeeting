@@ -1,5 +1,5 @@
 # AdSense readiness
-- [ ] Expand the meeting guide with classroom examples, detailed troubleshooting and safe real product screenshots.
+- [x] Expand the meeting guide with classroom examples, detailed troubleshooting and safe real product screenshots.
 - [ ] Publish the prepared changes after a current security check, then verify live content, privacy contact, ads.txt and disabled advertising.
 - [ ] Request AdSense review after live verification; requires the owner's AdSense account action if no authorised review control is available.
 - [x] Add original public information and privacy/safety pages with navigation.
